@@ -1,0 +1,38 @@
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore Roblox metadata and temp files
+*.rbxl.lock
+*.rbxlw
+*.rbxm.lock
+*.rbxmw
+*.rblx
+*.rblx.lock
+
+# Ignore compiled files
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Ignore package dependencies (if using external modules)
+node_modules/
+vendor/
+Packages/
+
+# Ignore IDE settings
+.vscode/
+.idea/
+*.iml
+
+# Ignore personal settings and cache
+*.lua~
+*.luac
+*.class
+*.pyc
+*.out
+
+# Ignore auto-generated Roblox Studio files
+*.rbxl.autosave
+*.rbxm.autosave
