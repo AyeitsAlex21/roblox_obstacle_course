@@ -14,7 +14,7 @@ Thumbs.db
 *.log
 *.tmp
 *.bak
-*.swp
+*.sw
 
 # Ignore package dependencies (if using external modules)
 node_modules/
