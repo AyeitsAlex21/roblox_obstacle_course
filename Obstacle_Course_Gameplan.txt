@@ -1,0 +1,64 @@
+Titles: Multiverse
+
+Gameplay:
+
+1. Stages
+    - multiple stages
+    - each stage has ~40 obstacles
+    - each stage has a couple checkpoints
+    - save what stage a player is on each time the join/leave
+    - differently 
+
+2. checkpoints
+    - save checkpoint in persistent storage players can go back to checkpoint unlimited times
+    - players can pay to go back to checkpoint when joining game again
+    - checkpoint every ~10 obstacles
+
+3. leaderboards:
+    - farthest checkpoint + stage achieved
+    - most in game currecny achieved
+    - current richest player
+    - leaderboard for fastest time to complete a stage
+
+4. Progress Bar:
+    - each checkpoint fills up the progress bar until you hit the end of the stage
+    - UI element showing where you are
+
+5. Lobbies
+    - There are multiple lobbies hosting a different amount of players
+    - different instances of the same server splitting players up
+
+
+
+
+MONETARY
+
+1. In game currency
+    - can buy in game in currency with robux
+    - passively logged in gives you in game currency (the rate you earn is increased based on stage you are on) 
+    - stage completion gives currency
+    - logging in on a calendar gives in game currecny more consecutive logins give more in game currecny
+    - bonus for checkpoints as well
+
+2. VIP
+    - package of perks for cheaper price than each one individually
+    - if you have some of the perks in the VIP the price is cheaper becuase you have some of the perks in the package
+
+3. perks
+    - different perks give diff powerups
+    - perks ex. jump boost, speed up, double money
+    - buy perks with in game money or robux
+
+4. skip stage
+    - pay robux or in game currency to skip stage
+
+5. save checkpoint in stage
+    - save checkpoint on but charge to go back if you left session
+
+6. pets
+    - only can buy robux
+    - loot boxes
+
+7. cosmetics
+    - only can buy with robux
+    - loot boxes?
