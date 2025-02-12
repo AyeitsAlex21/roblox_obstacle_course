@@ -15,3 +15,16 @@ rojo serve
 ```
 
 For more help, check out [the Rojo documentation](https://rojo.space/docs).
+
+### RUN DEV
+
+rojo setup based on: https://www.youtube.com/watch?v=18-cGOjfrKw&ab_channel=MonzterDEV
+
+1. in vscode go to view -> command pallet -> rojo -> default.project-json to start dev server
+2. Open roblox studio go to plugins
+3. click rojo and connect
+
+### ROJO
+
+if you want to rojo to register your folder at the same level as client/server/shared need to
+do it like the others in default.project.json
