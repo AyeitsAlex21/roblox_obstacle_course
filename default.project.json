@@ -23,6 +23,12 @@
       }
     },
 
+    "ServerStorage": {
+      "PlayerInfo":{
+        "$path": "src/server_storage"
+      }
+    },
+
     "Workspace": {
       "$properties": {
         "FilteringEnabled": true,
