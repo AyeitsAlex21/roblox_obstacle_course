@@ -31,7 +31,6 @@ jobs:
       - name: Verify Foreman installation
         run: |
           foreman list
-          foreman show
 
       - name: Install Rojo manually (if necessary)
         run: |
