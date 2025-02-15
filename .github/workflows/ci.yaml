@@ -59,4 +59,4 @@ jobs:
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
           PLACE_ID: ${{ env.PLACE_ID }}
-        run: rojo upload --api_key "$ROBLOX_API_KEY" --asset_id "$PLACE_ID" --asset game.project.json
+        run: rojo upload --api_key "$ROBLOX_API_KEY" --asset_id "$PLACE_ID"
