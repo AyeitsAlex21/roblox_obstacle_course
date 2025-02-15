@@ -5,7 +5,7 @@ on:
     branches:
       - dev
       - staging
-      - main
+      - prod
   
 
 jobs:
@@ -46,7 +46,7 @@ jobs:
             echo "PLACE_ID=83561582157613" >> $GITHUB_ENV
           elif [[ "${{ github.ref_name }}" == "staging" ]]; then
             echo "PLACE_ID=118056969555020" >> $GITHUB_ENV
-          elif [[ "${{ github.ref_name }}" == "main" ]]; then
+          elif [[ "${{ github.ref_name }}" == "prod" ]]; then
             echo "PLACE_ID=77626793227016" >> $GITHUB_ENV
           fi
 
