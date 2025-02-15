@@ -1,11 +1,12 @@
-name: Deploy Roblox Game
+name: Deploy to Roblox
 
 on:
   push:
     branches:
       - dev
       - staging
-      - prod
+      - main
+  
 
 jobs:
   deploy:
@@ -33,7 +34,24 @@ jobs:
         run: |
           rojo push --place-id ${{ secrets.ROBUX_PLACE_ID }} --api-key ${{ secrets.ROBUX_API_KEY }}
 
-      - name: Post-deployment cleanup
+      - name: Verify installation
         run: |
-          # Any post-deployment steps you need
-          echo "Deployment complete"
+          foreman list
+          rojo --version
+
+      - name: Set Place ID based on branch
+        id: place
+        run: |
+          if [[ "${{ github.ref_name }}" == "dev" ]]; then
+            echo "PLACE_ID=83561582157613" >> $GITHUB_ENV
+          elif [[ "${{ github.ref_name }}" == "staging" ]]; then
+            echo "PLACE_ID=118056969555020" >> $GITHUB_ENV
+          elif [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "PLACE_ID=77626793227016" >> $GITHUB_ENV
+          fi
+
+      - name: Deploy to Roblox
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+          PLACE_ID: ${{ env.PLACE_ID }}
+        run: rojo upload --api-key "$ROBLOX_API_KEY" --place "$PLACE_ID" --asset game.project.json
