@@ -49,8 +49,8 @@ jobs:
             echo "UNIVERSE_ID=7244383638" >> $GITHUB_ENV
           fi
 
-      - name: Compile rojo file to Roblox game file
-        run: rojo build -o game.rbxl
+      #- name: Compile rojo file to Roblox game file
+      #  run: rojo build -o game.rbxl
 
       - name: Deploy to Roblox
         env:
