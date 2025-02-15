@@ -49,8 +49,8 @@ jobs:
             echo "UNIVERSE_ID=7244383638" >> $GITHUB_ENV
           fi
 
-      #- name: Compile rojo file to Roblox game file
-      #  run: rojo build -o game.rbxl
+      - name: Compile rojo file to Roblox game file
+        run: rojo build -o game.rbxl
 
       - name: Deploy to Roblox
         env:
@@ -58,6 +58,6 @@ jobs:
           PLACE_ID: ${{ env.PLACE_ID }}
           UNIVERSE_ID: ${{ env.UNIVERSE_ID }}
         run: |
-          # rbxcloud experience publish -f game.rbxl -a "$ROBLOX_API_KEY" -p "$PLACE_ID" -u "$UNIVERSE_ID" -t
+          rbxcloud experience publish -f game.rbxl -p "$PLACE_ID" -u "$UNIVERSE_ID" -t published -a "$ROBLOX_API_KEY"
 
-          rojo upload --verbose --api_key "$ROBLOX_API_KEY" --asset_id "$PLACE_ID" --universe_id "$UNIVERSE_ID"
+          #rojo upload --verbose --api_key "$ROBLOX_API_KEY" --asset_id "$PLACE_ID" --universe_id "$UNIVERSE_ID"
