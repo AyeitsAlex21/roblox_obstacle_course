@@ -1,0 +1,47 @@
+name: Deploy to Roblox
+
+on:
+  push:
+    branches:
+      - dev
+      - staging
+      - main
+  
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Foreman
+        run: |
+          curl -fsSL https://foreman.rbxcdn.com/install.sh | bash
+          echo "$HOME/.foreman/bin" >> $GITHUB_PATH
+
+      - name: Install Rojo via Foreman
+        run: foreman install
+
+      - name: Verify installation
+        run: |
+          foreman list
+          rojo --version
+
+      - name: Set Place ID based on branch
+        id: place
+        run: |
+          if [[ "${{ github.ref_name }}" == "dev" ]]; then
+            echo "PLACE_ID=83561582157613" >> $GITHUB_ENV
+          elif [[ "${{ github.ref_name }}" == "staging" ]]; then
+            echo "PLACE_ID=118056969555020" >> $GITHUB_ENV
+          elif [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "PLACE_ID=77626793227016" >> $GITHUB_ENV
+          fi
+
+      - name: Deploy to Roblox
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+          PLACE_ID: ${{ env.PLACE_ID }}
+        run: rojo upload --api-key "$ROBLOX_API_KEY" --place "$PLACE_ID" --asset game.project.json
