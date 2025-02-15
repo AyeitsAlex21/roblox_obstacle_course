@@ -15,14 +15,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Rust
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y rustc
-
       - name: Install Foreman
-        run: |
-          cargo install foreman
+        uses: Roblox/setup-foreman@v1
 
       - name: Install dependencies via Foreman
         run: |
