@@ -10,6 +10,8 @@ Thumbs.db
 *.rblx
 *.rblx.lock
 
+*.rbxlx
+
 # Ignore compiled files
 *.log
 *.tmp
