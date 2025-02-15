@@ -6,7 +6,6 @@ on:
       - dev
       - staging
       - prod
-  
 
 jobs:
   deploy:
@@ -16,27 +15,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Foreman
+      - name: Install Rust
         run: |
-          # Install Rust (required for foreman)
           sudo apt-get update
           sudo apt-get install -y rustc
 
-          # Install Foreman using Cargo (Rust's package manager)
+      - name: Install Foreman
+        run: |
           cargo install foreman
 
       - name: Install dependencies via Foreman
         run: |
-          # Run foreman install to install tools defined in foreman.toml
           foreman install
 
-      - name: Run Rojo deploy
-        run: |
-          rojo push --place-id ${{ secrets.ROBUX_PLACE_ID }} --api-key ${{ secrets.ROBUX_API_KEY }}
-
-      - name: Verify installation
+      - name: Verify Foreman installation
         run: |
           foreman list
+          foreman show
+
+      - name: Install Rojo manually (if necessary)
+        run: |
+          # If Rojo is not being installed correctly, install manually
+          cargo install rojo
+
+      - name: Verify Rojo installation
+        run: |
           rojo --version
 
       - name: Set Place ID based on branch
