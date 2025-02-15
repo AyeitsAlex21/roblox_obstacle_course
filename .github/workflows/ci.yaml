@@ -17,6 +17,8 @@ jobs:
 
       - name: Install Foreman
         uses: Roblox/setup-foreman@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install dependencies via Foreman
         run: |
