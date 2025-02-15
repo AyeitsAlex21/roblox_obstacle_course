@@ -1,12 +1,11 @@
-name: Deploy to Roblox
+name: Deploy Roblox Game
 
 on:
   push:
     branches:
       - dev
       - staging
-      - main
-  
+      - prod
 
 jobs:
   deploy:
@@ -18,30 +17,23 @@ jobs:
 
       - name: Install Foreman
         run: |
-          curl -fsSL https://foreman.rbxcdn.com/install.sh | bash
-          echo "$HOME/.foreman/bin" >> $GITHUB_PATH
+          # Install Rust (required for foreman)
+          sudo apt-get update
+          sudo apt-get install -y rustc
 
-      - name: Install Rojo via Foreman
-        run: foreman install
+          # Install Foreman using Cargo (Rust's package manager)
+          cargo install foreman
 
-      - name: Verify installation
+      - name: Install dependencies via Foreman
         run: |
-          foreman list
-          rojo --version
+          # Run foreman install to install tools defined in foreman.toml
+          foreman install
 
-      - name: Set Place ID based on branch
-        id: place
+      - name: Run Rojo deploy
         run: |
-          if [[ "${{ github.ref_name }}" == "dev" ]]; then
-            echo "PLACE_ID=83561582157613" >> $GITHUB_ENV
-          elif [[ "${{ github.ref_name }}" == "staging" ]]; then
-            echo "PLACE_ID=118056969555020" >> $GITHUB_ENV
-          elif [[ "${{ github.ref_name }}" == "main" ]]; then
-            echo "PLACE_ID=77626793227016" >> $GITHUB_ENV
-          fi
+          rojo push --place-id ${{ secrets.ROBUX_PLACE_ID }} --api-key ${{ secrets.ROBUX_API_KEY }}
 
-      - name: Deploy to Roblox
-        env:
-          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
-          PLACE_ID: ${{ env.PLACE_ID }}
-        run: rojo upload --api-key "$ROBLOX_API_KEY" --place "$PLACE_ID" --asset game.project.json
+      - name: Post-deployment cleanup
+        run: |
+          # Any post-deployment steps you need
+          echo "Deployment complete"
