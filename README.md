@@ -17,7 +17,7 @@ rojo serve
 For more help, check out [the Rojo documentation](https://rojo.space/docs).
 
 ### RUN DEV
-
+ci/cd and foreman setup: https://www.youtube.com/watch?v=sEnNjNakXT8&ab_channel=sleitnick
 rojo setup based on: https://www.youtube.com/watch?v=18-cGOjfrKw&ab_channel=MonzterDEV
 
 1. in vscode go to view -> command pallet -> rojo -> default.project-json to start dev server
