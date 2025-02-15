@@ -44,15 +44,16 @@ jobs:
           echo "Branch detected: $BRANCH_NAME"
 
           if [[ "$BRANCH_NAME" == "dev" ]]; then
-            echo "PLACE_ID=83561582157613" >> $GITHUB_ENV
+            echo "UNIVERSE_ID=7244351607" >> $GITHUB_ENV
           elif [[ "$BRANCH_NAME" == "staging" ]]; then
-            echo "PLACE_ID=118056969555020" >> $GITHUB_ENV
+            echo "UNIVERSE_ID=7244377409" >> $GITHUB_ENV
           elif [[ "$BRANCH_NAME" == "prod" ]]; then
-            echo "PLACE_ID=77626793227016" >> $GITHUB_ENV
+            echo "UNIVERSE_ID=7244383638" >> $GITHUB_ENV
           fi
 
       - name: Deploy to Roblox
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
-          PLACE_ID: ${{ env.PLACE_ID }}
-        run: rojo upload --api_key "$ROBLOX_API_KEY" --asset_id "$PLACE_ID"
+          UNIVERSE_ID: ${{ env.UNIVERSE_ID }}
+        run: rojo upload --api_key "$ROBLOX_API_KEY" --universe_id "$UNIVERSE_ID"
+
