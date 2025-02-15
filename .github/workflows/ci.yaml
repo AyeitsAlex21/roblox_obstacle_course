@@ -58,6 +58,6 @@ jobs:
           PLACE_ID: ${{ env.PLACE_ID }}
           UNIVERSE_ID: ${{ env.UNIVERSE_ID }}
         run: |
-          rbxcloud experience publish -f game.rbxl -p "$PLACE_ID" -u "$UNIVERSE_ID" -t published -a "$ROBLOX_API_KEY"
+          #rbxcloud experience publish -f game.rbxl -p "$PLACE_ID" -u "$UNIVERSE_ID" -t published -a "$ROBLOX_API_KEY"
 
-          #rojo upload --verbose --api_key "$ROBLOX_API_KEY" --asset_id "$PLACE_ID" --universe_id "$UNIVERSE_ID"
+          rojo upload --verbose --api_key "$ROBLOX_API_KEY" --asset_id "$PLACE_ID" --universe_id "$UNIVERSE_ID"
