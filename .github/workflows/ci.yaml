@@ -1,0 +1,58 @@
+name: Deploy to Roblox
+
+on:
+  push:
+    branches:
+      - dev
+      - staging
+      - prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Foreman
+        uses: Roblox/setup-foreman@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install dependencies via Foreman
+        run: |
+          foreman install
+
+      - name: Verify Foreman installation
+        run: |
+          foreman list
+
+      - name: Verify Rojo installation
+        run: |
+          rojo --version
+
+      - name: Set Place ID and Universe ID based on branch
+        id: place
+        run: |
+          BRANCH_NAME=$(echo "${{ github.ref }}" | sed 's|refs/heads/||')
+          echo "Branch detected: $BRANCH_NAME"
+
+          if [[ "$BRANCH_NAME" == "dev" ]]; then
+            echo "PLACE_ID=83561582157613" >> $GITHUB_ENV
+            echo "UNIVERSE_ID=7244351607" >> $GITHUB_ENV
+          elif [[ "$BRANCH_NAME" == "staging" ]]; then
+            echo "PLACE_ID=118056969555020" >> $GITHUB_ENV
+            echo "UNIVERSE_ID=7244377409" >> $GITHUB_ENV
+          elif [[ "$BRANCH_NAME" == "prod" ]]; then
+            echo "PLACE_ID=77626793227016" >> $GITHUB_ENV
+            echo "UNIVERSE_ID=7244383638" >> $GITHUB_ENV
+          fi
+
+      - name: Deploy to Roblox
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+          PLACE_ID: ${{ env.PLACE_ID }}
+          UNIVERSE_ID: ${{ env.UNIVERSE_ID }}
+        run: |
+          rojo upload --verbose --api_key "$ROBLOX_API_KEY" --asset_id "$PLACE_ID" --universe_id "$UNIVERSE_ID"
