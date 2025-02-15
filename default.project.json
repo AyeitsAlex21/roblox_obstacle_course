@@ -25,14 +25,14 @@
 
     "ServerStorage": {
       "PlayerInfo":{
-        "$path": "src/server_storage"
+        "$path": "src/storage"
       }
     },
 
     "Workspace": {
       "$properties": {
         "FilteringEnabled": true,
-        "StreamingEnabled": false
+        "StreamingEnabled": true
       },
       "Baseplate": {
         "$className": "Part",
