@@ -1,3 +1,6 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
 -- server/env/terrain.lua
 local function createTerrain()
     -- Ground part
@@ -15,6 +18,19 @@ local function createTerrain()
     hill.Color = Color3.fromRGB(139, 69, 19)  -- brown
     hill.Anchored = true
     hill.Parent = game.Workspace
+
+    local model = ReplicatedStorage:FindFirstChild("Shared"):FindFirstChild("assets"):FindFirstChild("Checkpoint")
+
+    print("ok dude")
+    local checkpoint = model:Clone()
+
+    --checkpoint:WaitForChild("Checkpoint Spawn"):WaitForChild("Red Arrow")
+
+    checkpoint.Parent = Workspace
+    -- checkpoint.Rotation = Vector3.new(0, 90, 0)
+    checkpoint:SetPrimaryPartCFrame(CFrame.new(Vector3.new(10, 5, 0)))
+
+    print("ok dude")
 end
 
 createTerrain()  -- Call the function to generate the environment
