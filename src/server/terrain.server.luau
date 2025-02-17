@@ -22,10 +22,10 @@ local function createTerrain()
     local model = ReplicatedStorage:FindFirstChild("Shared"):FindFirstChild("assets"):FindFirstChild("Checkpoint")
 
     print("ok dude")
-    model:WaitForChild("Checkpoint Spawn"):WaitForChild("Red Arrow")
-
-    print("ok dude")
     local checkpoint = model:Clone()
+
+    --checkpoint:WaitForChild("Checkpoint Spawn"):WaitForChild("Red Arrow")
+
     checkpoint.Parent = Workspace
     -- checkpoint.Rotation = Vector3.new(0, 90, 0)
     checkpoint:SetPrimaryPartCFrame(CFrame.new(Vector3.new(10, 5, 0)))
