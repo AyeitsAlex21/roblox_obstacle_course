@@ -86,23 +86,55 @@ function Obstacle_Course_Generator.move_obstacle_to_last_location(lastObjectMode
     local newFrontPart = assetHelper.find_part(newObstacle, "Front")
     local newBackPart = assetHelper.find_part(newObstacle, "Back")
 
-    local direction = (lastFrontPart.Position - lastBackPart.Position).unit  -- Unit vector pointing in the direction from back to front
+    local lastSize = (lastFrontPart.Position - lastBackPart.Position)
+    local newSize = (newFrontPart.Position - lastBackPart.Position)
 
-    -- Calculate the distance between the back and front of the new obstacle
-    local newObstacleSize = newBackPart.Position - newObstacle.PrimaryPart.Position
 
-    -- Calculate the new position by moving the new obstacle just in front of the last one
-    local newPosition = lastFrontPart.Position + direction * newObstacleSize.Magnitude
+    local angle, rotX, rotY, rotZ = Obstacle_Course_Generator.get_euler_angles(lastSize, newSize)
 
-    -- Move the new obstacle to the calculated position
-    newObstacle:SetPrimaryPartCFrame(CFrame.new(newPosition))
 
+     -- get direction of last object to spawn object in front of last one
+    local lastDirection = lastSize.unit
+
+    -- get the new position by moving the new obstacle just in front of the last one 
+    local newPosition = lastFrontPart.Position + lastDirection * newSize.Magnitude
+
+    -- move new obstacle in front of old one
+    newObstacle:SetPrimaryPartCFrame(
+        CFrame.new(newPosition) * CFrame.Angles(math.rad(rotX), math.rad(rotY), math.rad(rotZ))
+    )
     newObstacle.Parent = workspace
 
     -- Print debug information
     print("Last obstacle front part position:", lastFrontPart.Position)
     print("New obstacle front part position:", newFrontPart.Position)
     print("Calculated new position:", newPosition)
+end
+
+function Obstacle_Course_Generator.get_euler_angles(v1, v2)
+
+    -- Normalize vectors
+    local mag1 = v1.Magnitude
+    local mag2 = v2.Magnitude
+    local v1Norm = v1 / mag1
+    local v2Norm = v2 / mag2
+
+    -- Compute dot product (angle)
+    local dot = v1Norm:Dot(v2Norm)
+    local angleRad = math.acos(math.clamp(dot, -1, 1)) -- Clamp to avoid NaN
+    local angleDeg = math.deg(angleRad)
+
+    -- Compute cross product (rotation axis)
+    local axis = v1:Cross(v2)
+    local axisNorm = axis.Unit -- Normalize the axis
+
+    -- Convert axis to Euler angles (approximate method)
+    local rotX = math.deg(math.atan2(axisNorm.Y, axisNorm.Z)) -- Rotation around X-axis
+    local rotY = math.deg(math.atan2(axisNorm.Z, axisNorm.X)) -- Rotation around Y-axis
+    local rotZ = math.deg(math.atan2(axisNorm.X, axisNorm.Y)) -- Rotation around Z-axis
+
+    return angleDeg, rotX, rotY, rotZ
+    
 end
 
 return Obstacle_Course_Generator

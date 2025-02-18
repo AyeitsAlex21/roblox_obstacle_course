@@ -12,26 +12,8 @@ local function createTerrain()
     hill.Anchored = true
     hill.Parent = game.Workspace
 
-    local model = ReplicatedStorage:FindFirstChild("assets"):FindFirstChild("Checkpoint")
-    
-    print("ok dude")
-    local checkpoint = model:Clone()
-
-    checkpoint:WaitForChild("Checkpoint Spawn"):WaitForChild("Arrow"):WaitForChild("Part")
-
-    checkpoint.Parent = Workspace
-    -- checkpoint.Rotation = Vector3.new(0, 90, 0)
-    checkpoint:SetPrimaryPartCFrame(CFrame.new(Vector3.new(10, 5, 0)))
-
-    print("ok dude")
-    ------------------------------------------
-
-    print(ServerScriptsService:WaitForChild("Server"))
-    print(ServerScriptsService:WaitForChild("Server"):WaitForChild("services"))
-    print(ServerScriptsService:WaitForChild("Server"):WaitForChild("services"):WaitForChild("generate_stage"))
     local Obstacle_Generator = require(ServerScriptsService:WaitForChild("Server"):WaitForChild("services"):WaitForChild("generate_stage"))
-
-    print(Obstacle_Generator)
+    
     Obstacle_Generator.generate_obstacle_course(123)
 
     
