@@ -4,9 +4,7 @@
     "$className": "DataModel",
 
     "ReplicatedStorage": {
-      "Shared": {
-        "$path": "src/shared"
-      }
+      "$path": "src/shared"
     },
 
     "ServerScriptService": {
@@ -24,9 +22,7 @@
     },
 
     "ServerStorage": {
-      "PlayerInfo":{
-        "$path": "src/storage"
-      }
+      "$path": "src/storage"
     },
 
     "Workspace": {
