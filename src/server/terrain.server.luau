@@ -2,6 +2,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local ServerScriptsService = game:GetService("ServerScriptService")
 
+
+
 -- server/env/terrain.lua
 local function createTerrain()
     -- A hill part
@@ -12,9 +14,11 @@ local function createTerrain()
     hill.Anchored = true
     hill.Parent = game.Workspace
 
-    local Obstacle_Generator = require(ServerScriptsService:WaitForChild("Server"):WaitForChild("services"):WaitForChild("generate_stage"))
+    --local Obstacle_Generator = require(ServerScriptsService:WaitForChild("Server"):WaitForChild("services"):WaitForChild("generate_stage"))
+    local PlayerDataService = require(ServerScriptsService.Server.services["PlayerDataService.module"])
+    PlayerDataService.OnStart()
     
-    Obstacle_Generator.generate_obstacle_course(123)
+    --Obstacle_Generator.generate_obstacle_course(123)
 
     
 
