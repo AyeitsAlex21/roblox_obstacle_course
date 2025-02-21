@@ -21,7 +21,9 @@ function Obstacle_Course_Generator.generate_obstacle_course(seed)
 
     local obstacleNames = {}
     for key, _ in pairs(Obstacle_Course_Generator.obstacle_config) do
-        table.insert(obstacleNames, key)
+        if key ~= "Checkpoint" then
+            table.insert(obstacleNames, key)
+        end
     end
 
     local assetsFolder = ReplicatedStorage:WaitForChild("assets")
@@ -42,22 +44,21 @@ function Obstacle_Course_Generator.generate_obstacle_course(seed)
         local curCheckpoint = checkpointModel:Clone()
         curCheckpoint.Parent = workspace
 
-        assetHelper.set_anchored(curCheckpoint, false)
+        assetHelper.set_part_attribute_in_model(curCheckpoint, "Anchored", false)
         Obstacle_Course_Generator.move_obstacle_to_last_location(lastObstacle, curCheckpoint)
-        assetHelper.set_anchored(curCheckpoint, true)
+        assetHelper.set_part_attribute_in_model(curCheckpoint, "Anchored", true)
 
         lastObstacle = curCheckpoint
-
-        
         
         -- Generate the current obstacle
         local curObstacleInd = math.random(1, #obstacleNames)  -- Corrected the index here
         local curObstacleName = obstacleNames[curObstacleInd]
         local curObstacleModel = objectFolder:WaitForChild(curObstacleName):Clone()
 
+        
+        Obstacle_Course_Generator.move_obstacle_to_last_location(lastObstacle, curObstacleModel)
         Obstacle_Course_Generator.apply_permutations_to_groups(curObstacleModel)
         -- Move the new obstacle in front of the last one
-        Obstacle_Course_Generator.move_obstacle_to_last_location(lastObstacle, curObstacleModel)
 
         -- Set the position of the new obstacle based on the last obstacle's location
         curObstacleModel.Parent = workspace
@@ -73,8 +74,8 @@ end
 
 function Obstacle_Course_Generator.move_obstacle_to_last_location(lastObjectModel, newObstacle)
     --[[ 
-    Moves the new obstacle in front of the last one while maintaining rotation.
-    Adds a 15-degree clockwise rotation to the new obstacle, relative to its local axes.
+    Moves the new obstacle in front of the last one maintaining a persistent direction
+    except we also apply a permutation rotation
     --]]
 
     -- Set obstacle to beginning
@@ -85,48 +86,115 @@ function Obstacle_Course_Generator.move_obstacle_to_last_location(lastObjectMode
     local newFrontPart = assetHelper.find_part(newObstacle, "Front")
     local newBackPart = assetHelper.find_part(newObstacle, "Back")
 
-    -- Get size and direction
-    local lastDirection = (lastFrontPart.Position - lastBackPart.Position).unit
+    -- get directions
     local newDirection = (newFrontPart.Position - newBackPart.Position).unit
+    local lastDirection = (lastFrontPart.Position - lastBackPart.Position)
+    lastDirection = Vector3.new(lastDirection.X, 0, lastDirection.Z).unit
 
+    -- get size of new object
     local newSize = (newFrontPart.Position - newBackPart.Position).Magnitude / 2
 
-    -- Compute new position in front of the last obstacle
-    local newPosition = lastFrontPart.Position + newSize * lastDirection
+    local offset = newBackPart.Position - newObstacle.PrimaryPart.Position
 
-    
+    -- Compute new position in front of the last obstacle
+    local newPosition = lastFrontPart.Position + (7 + offset.Magnitude) * lastDirection
 
     -- Get CFrame to rotate NewDirection into lastDirection
-    local rotationCframe = CFrame.fromRotationBetweenVectors(newDirection, lastDirection)
+    local rotationFromOriginalCframe = CFrame.fromRotationBetweenVectors(newDirection, lastDirection)
 
-    -- Add a 15-degree clockwise rotation around the Y-axis (local axes)
-    local additionalRotation = CFrame.Angles(0, 0, 0) -- Negative for clockwise
-
-    if math.random(0, 100) > 60
-    then
-        additionalRotation = CFrame.Angles(0, math.rad(-45), 0)
-    end
+    local permuationPositionCframe, 
+        permuationOrientationCframe, 
+        permuationSizeVector = Obstacle_Course_Generator.get_model_permuation_matrices(newObstacle)
 
     -- Combine the rotations and position
+    -- POSITION
     local newObjectCFrame = 
-        -- POSISTION
-        CFrame.new() -- Create a neutral frame at 0,0,0 and neutral rotation
+        CFrame.new()
         * CFrame.new(newPosition) -- Move to new position
+        * permuationPositionCframe
 
-        -- ROTATIONS
-        -- do additional roation first to avoid gimble lock
-        * additionalRotation
-        * rotationCframe
+    -- ROTATIONS
+    -- Apply the alignment rotation first to avoid gimbal lock
+    newObjectCFrame *= rotationFromOriginalCframe 
+
+    -- Apply permutation rotation correctly in object space
+    newObjectCFrame *= newObjectCFrame:ToWorldSpace(permuationOrientationCframe):ToObjectSpace(newObjectCFrame)
 
     -- Set the final CFrame
     newObstacle:SetPrimaryPartCFrame(newObjectCFrame)
+
+
+    -- apply scaling to all parts in the obstacle
+    for _, part in pairs(newObstacle:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Size = part.Size * permuationSizeVector
+        end
+    end
 
     -- Parent it to workspace
     newObstacle.Parent = workspace
 end
 
+function Obstacle_Course_Generator.get_model_permuation_matrices(ObstacleModel)
+    --[[
+    (model) -> (Cframe, Cframe, Vector)
+
+    Uses the obstacle_config to get matrices to permuate the whole obstacle model
+    --]]
+    if typeof(ObstacleModel) ~= "Instance" or not ObstacleModel:IsA("Model") then
+        error("Expected 'model' to be a Model instance, got " .. typeof(ObstacleModel))
+    end
+
+    local positionCframe = CFrame.new()
+    local rotationCframe = CFrame.new()
+    local sizeVector = Vector3.new(1, 1, 1)
+
+    local ObstacleConfigTable = Obstacle_Course_Generator.obstacle_config
+    local ObstacleName = ObstacleModel.Name
+
+    local obstacleConfig = ObstacleConfigTable[ObstacleName]
+
+    if not obstacleConfig then
+        error(string.format("'%s' is not found in obstacle_course Config", ObstacleName))
+    end
+
+    if obstacleConfig.position then
+        local xPos = (obstacleConfig.position.x[1] == obstacleConfig.position.x[2]) and 0 or math.random(obstacleConfig.position.x[1], obstacleConfig.position.x[2])
+        local yPos = (obstacleConfig.position.y[1] == obstacleConfig.position.y[2]) and 0 or math.random(obstacleConfig.position.y[1], obstacleConfig.position.y[2])
+        local zPos = (obstacleConfig.position.z[1] == obstacleConfig.position.z[2]) and 0 or math.random(obstacleConfig.position.z[1], obstacleConfig.position.z[2])
+        positionCframe = CFrame.new(xPos, yPos, zPos)
+    end
+
+    if obstacleConfig.orientation then
+        local xRot = obstacleConfig.orientation.x and math.rad(math.random(obstacleConfig.orientation.x[1], obstacleConfig.orientation.x[2])) or 0
+        local yRot = obstacleConfig.orientation.y and math.rad(math.random(obstacleConfig.orientation.y[1], obstacleConfig.orientation.y[2])) or 0
+        local zRot = obstacleConfig.orientation.z and math.rad(math.random(obstacleConfig.orientation.z[1], obstacleConfig.orientation.z[2])) or 0
+        rotationCframe = CFrame.Angles(xRot, yRot, zRot)
+    end
+
+    if obstacleConfig.size then
+        local xSize = (obstacleConfig.size.x[1] == obstacleConfig.size.x[2]) and 1 or math.random(obstacleConfig.size.x[1], obstacleConfig.size.x[2])
+        local ySize = (obstacleConfig.size.y[1] == obstacleConfig.size.y[2]) and 1 or math.random(obstacleConfig.size.y[1], obstacleConfig.size.y[2])
+        local zSize = (obstacleConfig.size.z[1] == obstacleConfig.size.z[2]) and 1 or math.random(obstacleConfig.size.z[1], obstacleConfig.size.z[2])
+        sizeVector = Vector3.new(xSize, ySize, zSize)
+    end
+
+    return positionCframe, rotationCframe, sizeVector
+    
+end
 
 function Obstacle_Course_Generator.apply_permutations_to_groups(ObstacleModel)
+    --[[
+    (Model) -> None
+
+    This function uses the obstacle_config file permutate the model groups
+    inside the model given
+    --]]
+    if typeof(ObstacleModel) ~= "Instance" or not ObstacleModel:IsA("Model") then
+        error("Expected 'model' to be a Model instance, got " .. typeof(ObstacleModel))
+    end
+    
+
     local ObstacleConfigTable = Obstacle_Course_Generator.obstacle_config
     local ObstacleName = ObstacleModel.Name
 
@@ -141,9 +209,9 @@ function Obstacle_Course_Generator.apply_permutations_to_groups(ObstacleModel)
     for group_name, group_data in pairs(groups) do
         local group_model = assetHelper.find_model(ObstacleModel, group_name)
 
-        -- Make sure we found the group model
+        -- if ground model not found skip
         if group_model then
-            -- Apply random position shift if specified in group_data
+            -- apply random position shift if specified in group_data
             local positionOffset = Vector3.new(0, 0, 0)
             if group_data.position then
                 local xPos = (group_data.position.x[1] == group_data.position.x[2]) and 0 or math.random(group_data.position.x[1], group_data.position.x[2])
@@ -152,7 +220,7 @@ function Obstacle_Course_Generator.apply_permutations_to_groups(ObstacleModel)
                 positionOffset = Vector3.new(xPos, yPos, zPos)
             end
 
-            -- Apply random rotation (orientation) if specified in group_data
+            -- apply random rotation if specified in group_data
             local rotationOffset = CFrame.Angles(0, 0, 0)
             if group_data.orientation then
                 local xRot = group_data.orientation.x and math.rad(math.random(group_data.orientation.x[1], group_data.orientation.x[2])) or 0
@@ -161,7 +229,7 @@ function Obstacle_Course_Generator.apply_permutations_to_groups(ObstacleModel)
                 rotationOffset = CFrame.Angles(xRot, yRot, zRot)
             end
 
-            -- Apply random scaling if specified in group_data
+            -- apply random scaling if specified in group_data
             local scaleFactor = Vector3.new(1, 1, 1)
             if group_data.size then
                 local xSize = (group_data.size.x[1] == group_data.size.x[2]) and 1 or math.random(group_data.size.x[1], group_data.size.x[2])
@@ -170,14 +238,15 @@ function Obstacle_Course_Generator.apply_permutations_to_groups(ObstacleModel)
                 scaleFactor = Vector3.new(xSize, ySize, zSize)
             end
 
-            -- Apply transformations to each part in the group
-            for _, part in pairs(group_model:GetChildren()) do
+            -- Apply the permutations to each part
+            for _, part in pairs(group_model:GetDescendants()) do
                 if part:IsA("BasePart") then
-                    -- Apply scaling to the part's size
-                    part.Size = part.Size * scaleFactor
+                     -- apply the scaling
+                     part.Size = part.Size * scaleFactor
 
-                    -- Apply position and rotation to the part's CFrame
-                    part.CFrame = part.CFrame * CFrame.new(positionOffset) * rotationOffset
+                     -- apply position then rotation to the parts CFrame
+                     part.CFrame = part.CFrame * CFrame.new(positionOffset) * rotationOffset
+
                 end
             end
         end
@@ -185,6 +254,5 @@ function Obstacle_Course_Generator.apply_permutations_to_groups(ObstacleModel)
 
     return nil
 end
-
 
 return Obstacle_Course_Generator
