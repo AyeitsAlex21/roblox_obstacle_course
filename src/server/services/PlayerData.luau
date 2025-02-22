@@ -1,6 +1,8 @@
+local Shared = {}
+--[[
 export type PlayerData = {
     --change stage to time
-    stage: number,
+    time: number,
     deaths: number,
     --[[
     skips: number,
@@ -13,18 +15,26 @@ export type PlayerData = {
     perks: {
         [string]: boolean
     },
-    vip: boolean,--]]
+    vip: boolean,
 }
 
 -- variable of the playerdata type used for the players default data
 local DEFAULT_PLAYER_DATA: PlayerData = {
     --change stage to time
-    stage = 1,
+    time = 0,
     deaths = 0
 }
 
-local Shared = {}
+
 
 Shared.DEFAULT_PLAYER_DATA = DEFAULT_PLAYER_DATA
+--]]
+
+Shared.DEFAULT_PLAYER_DATA = {
+    time = 0,
+    deaths = 0
+}
+
+export type PlayerData = typeof(Shared.DEFAULT_PLAYER_DATA)
 
 return Shared

@@ -2,6 +2,28 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local ServerScriptService = game:GetService("ServerScriptService")
+
+-- ProfileService library makes securely manager the players data simple and reliable
+local DataTemplate = require(ServerScriptService.Server.services.PlayerData)
+local ProfileStore = require(ServerScriptService.ProfileStore)
+
+local DATASTORE_NAME = "Production" -- DO NOT MODIFY
+
+--[[
+the ONLY time we change the datastore name is when we are working inside roblox studio
+If the script is ran in roblox studio, then use the datastore testing
+--]]
+if RunService:IsStudio() then
+	DATASTORE_NAME = "Testing"
+end
+
+-- profilestore easy to use datastorage
+local PlayerStore = ProfileStore.New(DATASTORE_NAME, DataTemplate.DEFAULT_PLAYER_DATA)
+
+-- create a variable to hold all the players profiles
+local Profiles: {[Player]: typeof(PlayerStore:StartSessionAsync())} = {}
+
 
 -- tables
 -- Local table can only be shared with functions in this script
@@ -12,11 +34,10 @@ local Shared = {}
 -- Lookup table for storing each players time instance
 local playerTimers = {}
 
+
+
 -- Onstart function can be used by other scripts
 function Shared.OnStart()
-    -- to detect when a player joins connects leaderstats function to playeradded event
-    Players.PlayerAdded:Connect(Local.CreateLeaderstats)
-
     -- when the player leaves, remove them from the lookup table
     Players.PlayerRemoving:Connect(function(player)
         playerTimers[player] = nil
@@ -24,8 +45,12 @@ function Shared.OnStart()
     -- account for players that are somehow loaded into the game before the script runs
     -- iterate through all the players that are currently in the game
     for _, player in Players:GetPlayers() do
-        Local.CreateLeaderstats(player)
+        task.spawn(Local.CreateProfile, player)
     end
+
+	-- to detect when a player joins connects leaderstats function to playeradded event
+	Players.PlayerAdded:Connect(Local.CreateProfile)
+	Players.PlayerRemoving:Connect(Local.RemoveProfile)
 
 	-- Shared timer loop that updates every second.
 	task.spawn(function()
@@ -40,6 +65,30 @@ function Shared.OnStart()
 			end
 		end
 	end)
+end
+
+function Local.RemoveProfile(player: Player)
+	local profile = Profiles[player]
+	if profile ~= nil then
+		profile:EndSession()
+	end
+end
+
+function Shared.GetData(player:Player): DataTemplate.PlayerData?
+	local profile = Profiles[player]
+	if not profile then return end
+	return profile.Data
+end
+
+function Shared.UpdateDeaths(player: Player, amount: number)
+	local data = Shared.GetData(player)
+	if not data then return end
+	local deaths = data.deaths
+	print(`Player had {deaths} deaths`)
+	data.deaths += amount
+	local newDeaths = data.deaths
+	print(`Player now has {newDeaths} deaths`)
+	print(Shared.GetData(player))
 end
 
 -- change stage to timer
@@ -58,6 +107,42 @@ function Local.CreateLeaderstats(player: Player)
 
 	-- Add this player's timer to our lookup table.
 	playerTimers[player] = timer
+end
+
+
+function Local.CreateProfile(player: Player)
+	local userId = player.UserId
+	local profileKey = `{userId}_Data`
+	-- get the players profile from the profilestore
+	local profile = PlayerStore:StartSessionAsync(profileKey)
+	-- make sure if we do actually have access to the players profile
+	if not profile then
+		player:Kick("Unable to load your player data.")
+		return
+	end
+	-- cleanup method when the player leaves our game. Release removes the session lock from the profile 
+	-- and the data will immediately be saved for the last time
+	-- remove the players profile from the profile table and kick them
+	profile.OnSessionEnd:Connect(function()
+		Profiles[player] = nil
+		player:Kick("Profile session ended. Please rejoin")
+	end)
+
+	local isInGame = player.Parent == Players
+	if isInGame then
+		Profiles[player] = profile
+	else
+		profile:EndSession()
+	end
+
+	--associate a players UserID with their profile
+	profile:AddUserId(player.UserId)
+	--whenever we make changes to the playerdata template, reconcile will fill in all missing variables
+	profile:Reconcile()
+
+	Profiles[player] = profile
+	Local.CreateLeaderstats(player)
+
 end
 
 --[[
