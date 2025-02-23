@@ -4,9 +4,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
 
+--export type UpdateStateAction = UpdateState.UpdateStateAction
+
 -- ProfileService library makes securely manager the players data simple and reliable
 local DataTemplate = require(ServerScriptService.Server.services.PlayerData)
-local ProfileStore = require(ServerScriptService.ProfileStore)
+local ProfileStore = require(ServerScriptService.Server.Libs["ProfileStore"])
+local UpdateState = require(ReplicatedStorage.Functions)
 
 local DATASTORE_NAME = "Production" -- DO NOT MODIFY
 
@@ -16,6 +19,9 @@ If the script is ran in roblox studio, then use the datastore testing
 --]]
 if RunService:IsStudio() then
 	DATASTORE_NAME = "Testing"
+	print("DATASTORE IN USE: Testing")
+else
+	print("DATASTORE IN USE: Prod")
 end
 
 -- profilestore easy to use datastorage
@@ -30,14 +36,14 @@ local Profiles: {[Player]: typeof(PlayerStore:StartSessionAsync())} = {}
 local Local = {}
 -- Shared table can be shared with other scripts
 local Shared = {}
-
 -- Lookup table for storing each players time instance
 local playerTimers = {}
 
-
+Shared.ProfileLoaded = Instance.new("BindableEvent")
 
 -- Onstart function can be used by other scripts
 function Shared.OnStart()
+
     -- when the player leaves, remove them from the lookup table
     Players.PlayerRemoving:Connect(function(player)
         playerTimers[player] = nil
@@ -80,6 +86,8 @@ function Shared.GetData(player:Player): DataTemplate.PlayerData?
 	return profile.Data
 end
 
+--update
+--[[
 function Shared.UpdateDeaths(player: Player, amount: number)
 	local data = Shared.GetData(player)
 	if not data then return end
@@ -90,6 +98,25 @@ function Shared.UpdateDeaths(player: Player, amount: number)
 	print(`Player now has {newDeaths} deaths`)
 	print(Shared.GetData(player))
 end
+
+]]--
+
+function Shared.Update(player: Player, action: UpdateState.UpdateDataAction)
+	local profile = Profiles[player]
+	if not profile then
+		return
+	end
+
+	if action.type == "UpdateTime" then
+		player.leaderstats.timer.Value += action.amount
+		print("TIME IS BEING UPDATED!!")
+	elseif action.type == "UpdateDeaths" then
+		player.leaderstats.deaths.Value += action.amount
+		print("DEATH IS BEING UPDATED!!")
+	end
+	UpdateState(profile.Data, action)
+end
+
 
 -- change stage to timer
 function Local.CreateLeaderstats(player: Player)
@@ -104,11 +131,23 @@ function Local.CreateLeaderstats(player: Player)
 	timer.Value = 0 -- start timer at 0 seconds
 	timer.Parent = leaderstats
 	print("timer created for", player.Name)
-
 	-- Add this player's timer to our lookup table.
 	playerTimers[player] = timer
-end
 
+	-- Create a deaths value that starts at 0.
+	local deaths = Instance.new("NumberValue")
+	deaths.Name = "deaths"
+	deaths.Value = 0
+	deaths.Parent = leaderstats
+	print("deaths created for", player.Name)
+
+	-- Create a deaths value that starts at 0.
+	local CheckPoints = Instance.new("NumberValue")
+	CheckPoints.Name = "Checkpoints"
+	CheckPoints.Value = 0
+	CheckPoints.Parent = leaderstats
+	print("CheckPoints created for", player.Name)
+end
 
 function Local.CreateProfile(player: Player)
 	local userId = player.UserId
@@ -143,7 +182,22 @@ function Local.CreateProfile(player: Player)
 	Profiles[player] = profile
 	Local.CreateLeaderstats(player)
 
+	Shared.ProfileLoaded:Fire(player)
 end
+
+local function printPlayerData(player)
+	local data = Shared.GetData(player)
+	if data then
+		print("Data for", player.Name, ":", data)
+	else
+		print("No data found for", player.Name)
+	end
+end
+
+Players.PlayerAdded:Connect(function(player)
+	task.wait(5) -- Give time for the profile and leaderstats to be set up
+	printPlayerData(player)
+end)
 
 --[[
 local RunService = game:GetService("RunService")
