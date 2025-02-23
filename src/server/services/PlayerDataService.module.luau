@@ -186,17 +186,17 @@ function Local.CreateProfile(player: Player)
 end
 
 local function printPlayerData(player)
-	local data = Shared.GetData(player)
-	if data then
-		print("Data for", player.Name, ":", data)
-	else
-		print("No data found for", player.Name)
-	end
+    local data = Shared.GetData(player)
+    if data then
+        print("Data for", player.Name, ":", data)
+    else
+        print("No data found for", player.Name)
+    end
 end
 
 Players.PlayerAdded:Connect(function(player)
-	task.wait(5) -- Give time for the profile and leaderstats to be set up
-	printPlayerData(player)
+    task.wait(5)  -- Give time for the profile and leaderstats to be set up
+    printPlayerData(player)
 end)
 
 --[[
