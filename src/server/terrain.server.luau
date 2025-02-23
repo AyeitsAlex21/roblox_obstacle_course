@@ -17,6 +17,8 @@ local function createTerrain()
     --local Obstacle_Generator = require(ServerScriptsService:WaitForChild("Server"):WaitForChild("services"):WaitForChild("generate_stage"))
     local PlayerDataService = require(ServerScriptsService.Server.services["PlayerDataService.module"])
     PlayerDataService.OnStart()
+    --local RespawnService = require(ServerScriptsService.Server.services["RespawnService.module"])
+    --RespawnService.Onstart()
     
     --Obstacle_Generator.generate_obstacle_course(123)
 
