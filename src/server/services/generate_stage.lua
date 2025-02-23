@@ -1,8 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptsService = game:GetService("ServerScriptService")
 
-local GRID_SIZE = 100
-
 local assetHelper = require(ServerScriptsService.Server.helpers.assets)
 
 local Obstacle_Course_Generator = {
@@ -10,55 +8,15 @@ local Obstacle_Course_Generator = {
     ["stage_config"] = require(ServerScriptsService.Server.config.stage_config)
 }
 
-local function get_bounding_box(model)
-    if not model.PrimaryPart then return nil, nil end
+local Obstalce_Grid = {
+    grid_table = {},
+    obstacle_to_grids = {}
+}
 
-    local minBound, maxBound = nil, nil
-    local primaryCFrame = model.PrimaryPart.CFrame
+local GRID_SIZE = Obstacle_Course_Generator.stage_config.grid_size
 
-    for _, part in pairs(model:GetDescendants()) do
-        if part:IsA("BasePart") then
-            local size = part.Size / 2 -- Half-size for AABB calculation
-            local partCFrame = part.CFrame
-
-            -- Compute the 8 corners in world space
-            local localCorners = {
-                Vector3.new(-size.X, -size.Y, -size.Z),
-                Vector3.new(-size.X, -size.Y, size.Z),
-                Vector3.new(-size.X, size.Y, -size.Z),
-                Vector3.new(-size.X, size.Y, size.Z),
-                Vector3.new(size.X, -size.Y, -size.Z),
-                Vector3.new(size.X, -size.Y, size.Z),
-                Vector3.new(size.X, size.Y, -size.Z),
-                Vector3.new(size.X, size.Y, size.Z),
-            }
-
-            for _, localCorner in ipairs(localCorners) do
-                local worldCorner = partCFrame:PointToWorldSpace(localCorner)
-
-                if not minBound or not maxBound then
-                    minBound, maxBound = worldCorner, worldCorner
-                else
-                    minBound = Vector3.new(
-                        math.min(minBound.X, worldCorner.X),
-                        math.min(minBound.Y, worldCorner.Y),
-                        math.min(minBound.Z, worldCorner.Z)
-                    )
-                    maxBound = Vector3.new(
-                        math.max(maxBound.X, worldCorner.X),
-                        math.max(maxBound.Y, worldCorner.Y),
-                        math.max(maxBound.Z, worldCorner.Z)
-                    )
-                end
-            end
-        end
-    end
-
-    return minBound, maxBound
-end
-
-local function addObstacleToGrid(obstacle, grid_table, obstacle_to_grids)
-    local minBound, maxBound = get_bounding_box(obstacle)
+function Obstalce_Grid.addObstacleToGrid(obstacle, grid_table, obstacle_to_grids)
+    local minBound, maxBound = assetHelper.get_bounding_box(obstacle)
     if not minBound or not maxBound then return end
 
     local grid_min = Vector3.new(
@@ -88,7 +46,7 @@ local function addObstacleToGrid(obstacle, grid_table, obstacle_to_grids)
 end
 
 -- Utility: Remove an obstacle from the grid table (for backtracking)
-local function removeObstacleFromGrid(obstacle, grid_table, obstacle_to_grids)
+function Obstalce_Grid.removeObstacleFromGrid(obstacle, grid_table, obstacle_to_grids)
     local cells = obstacle_to_grids[obstacle]
     if cells then
         for _, key in ipairs(cells) do
@@ -109,7 +67,7 @@ end
 
 function Obstacle_Course_Generator.check_collision_grid(newObstacle, grid_table)
     local newCheckpoint = newObstacle:GetAttribute("checkpoint_num")
-    local newMin, newMax = get_bounding_box(newObstacle)
+    local newMin, newMax = assetHelper.get_bounding_box(newObstacle)
     if not newMin or not newMax then return false end
 
     local grid_min = Vector3.new(
@@ -150,11 +108,11 @@ function Obstacle_Course_Generator.check_collision_grid(newObstacle, grid_table)
                     for _, obstacle in ipairs(obstacles_in_cell) do
                         local otherCheckpoint = obstacle:GetAttribute("checkpoint_num")
                         if otherCheckpoint ~= nil and (newCheckpoint - otherCheckpoint > 2) then
-                            local otherMin, otherMax = get_bounding_box(obstacle)
+                            local otherMin, otherMax = assetHelper.get_bounding_box(obstacle)
                             if otherMin and otherMax then
                                 local otherCenter = (otherMin + otherMax) * 0.5
                                 local otherSize = otherMax - otherMin
-                                local expandedOtherHalf = (otherSize * 1.5) * 0.5
+                                local expandedOtherHalf = (otherSize * 1) * 0.5
                                 local expandedOtherMin = otherCenter - expandedOtherHalf
                                 local expandedOtherMax = otherCenter + expandedOtherHalf
 
@@ -218,11 +176,9 @@ function Obstacle_Course_Generator.generate_obstacle_course(seed)
     local obstacle_to_grids = {}   -- Maps each obstacle to the grid cells it occupies.
     
     local function try_place(index, lastObstacle)
-        
         task.wait()
-        
 
-        print("Attempting placement after:", lastObstacle.Name, lastObstacle:GetAttribute("checkpoint_num"))
+        -- if true done placing obstacles end recursion
         if index > numObstacles then 
             return true 
         end
@@ -241,7 +197,7 @@ function Obstacle_Course_Generator.generate_obstacle_course(seed)
         end
     
         newObstacle:SetAttribute("checkpoint_num", index)
-        local MAX_ATTEMPTS = 10
+        local MAX_ATTEMPTS = 5
         -- For non-checkpoint obstacles, we increment index by one after placement.
         local newInd = (newObstacle.Name == "Checkpoint") and index or index + 1
         local origCframe = newObstacle.PrimaryPart.CFrame
@@ -252,7 +208,7 @@ function Obstacle_Course_Generator.generate_obstacle_course(seed)
             assetHelper.set_part_attribute_in_model(newObstacle, "Anchored", false)
     
             Obstacle_Course_Generator.apply_permutations_to_groups(newObstacle)
-            Obstacle_Course_Generator.move_obstacle_to_last_location(lastObstacle, newObstacle)
+            Obstacle_Course_Generator.move_obstacle_to_last_location(lastObstacle, newObstacle, finalCheckpoint.PrimaryPart.Position)
     
             assetHelper.set_part_attribute_in_model(newObstacle, "Anchored", true)
             
@@ -263,18 +219,18 @@ function Obstacle_Course_Generator.generate_obstacle_course(seed)
 
 
             -- If valid, add the obstacle to the grid table.
-            addObstacleToGrid(newObstacle, grid_table, obstacle_to_grids)
+            Obstalce_Grid.addObstacleToGrid(newObstacle, grid_table, obstacle_to_grids)
             
             if try_place(newInd, newObstacle) then
                 return true
             end
-
-            if newObstacle.Name == "Checkpoint" then
-                break
-            end
+ 
+            --if newObstacle.Name == "Checkpoint" then
+            --    break
+            --end
 
             -- Backtracking: remove this obstacle from the grid since subsequent placement failed.
-            removeObstacleFromGrid(newObstacle, grid_table, obstacle_to_grids)
+            Obstalce_Grid.removeObstacleFromGrid(newObstacle, grid_table, obstacle_to_grids)
         end
 
         print("Backtracking from obstacle", newObstacle.Name)
@@ -291,45 +247,9 @@ function Obstacle_Course_Generator.generate_obstacle_course(seed)
     return obstacleCourseModel
 end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 -- Revised placement function with improved physics update and logging.
 
-function Obstacle_Course_Generator.move_obstacle_to_last_location(lastObjectModel, newObstacle)
+function Obstacle_Course_Generator.move_obstacle_to_last_location(lastObjectModel, newObstacle, biasLocation)
     --[[ 
     Moves the new obstacle in front of the last one maintaining a persistent direction
     except we also apply a permutation rotation
@@ -363,7 +283,7 @@ function Obstacle_Course_Generator.move_obstacle_to_last_location(lastObjectMode
 
     local permuationPositionCframe, 
         permuationOrientationCframe, 
-        permuationSizeVector = Obstacle_Course_Generator.get_model_permuation_matrices(newObstacle)
+        permuationSizeVector = Obstacle_Course_Generator.get_model_permuation_matrices(newObstacle, biasLocation, lastObjectModel.PrimaryPart.Position)
 
     -- Combine the rotations and position
     -- POSITION
@@ -392,11 +312,13 @@ function Obstacle_Course_Generator.move_obstacle_to_last_location(lastObjectMode
 
 end
 
-function Obstacle_Course_Generator.get_model_permuation_matrices(ObstacleModel)
-    --[[
-    (model) -> (Cframe, Cframe, Vector)
+function Obstacle_Course_Generator.get_model_permuation_matrices(ObstacleModel, biasLocation, lastPosition)
+    --[[ 
+    (model, Vector3?) -> (CFrame, CFrame, Vector3)
 
-    Uses the obstacle_config to get matrices to permuate the whole obstacle model
+    Uses the obstacle_config to get matrices to permute the whole obstacle model.
+    If biasLocation is provided and the obstacle is over 1000 units away in X,Z,
+    the Y rotation is nudged towards that point within allowed rotation bounds.
     --]]
     if typeof(ObstacleModel) ~= "Instance" or not ObstacleModel:IsA("Model") then
         error("Expected 'model' to be a Model instance, got " .. typeof(ObstacleModel))
@@ -415,20 +337,45 @@ function Obstacle_Course_Generator.get_model_permuation_matrices(ObstacleModel)
         error(string.format("'%s' is not found in obstacle_course Config", ObstacleName))
     end
 
+    -- Position Calculation
+    local xPos, yPos, zPos = 0, 0, 0
     if obstacleConfig.position then
-        local xPos = (obstacleConfig.position.x[1] == obstacleConfig.position.x[2]) and 0 or math.random(obstacleConfig.position.x[1], obstacleConfig.position.x[2])
-        local yPos = (obstacleConfig.position.y[1] == obstacleConfig.position.y[2]) and 0 or math.random(obstacleConfig.position.y[1], obstacleConfig.position.y[2])
-        local zPos = (obstacleConfig.position.z[1] == obstacleConfig.position.z[2]) and 0 or math.random(obstacleConfig.position.z[1], obstacleConfig.position.z[2])
-        positionCframe = CFrame.new(xPos, yPos, zPos)
+        xPos = (obstacleConfig.position.x[1] == obstacleConfig.position.x[2]) and 0 or math.random(obstacleConfig.position.x[1], obstacleConfig.position.x[2])
+        yPos = (obstacleConfig.position.y[1] == obstacleConfig.position.y[2]) and 0 or math.random(obstacleConfig.position.y[1], obstacleConfig.position.y[2])
+        zPos = (obstacleConfig.position.z[1] == obstacleConfig.position.z[2]) and 0 or math.random(obstacleConfig.position.z[1], obstacleConfig.position.z[2])
     end
 
+    positionCframe = CFrame.new(xPos, yPos, zPos)
+
+    -- Rotation Calculation
+    local xRot, yRot, zRot = 0, 0, 0
     if obstacleConfig.orientation then
-        local xRot = obstacleConfig.orientation.x and math.rad(math.random(obstacleConfig.orientation.x[1], obstacleConfig.orientation.x[2])) or 0
-        local yRot = obstacleConfig.orientation.y and math.rad(math.random(obstacleConfig.orientation.y[1], obstacleConfig.orientation.y[2])) or 0
-        local zRot = obstacleConfig.orientation.z and math.rad(math.random(obstacleConfig.orientation.z[1], obstacleConfig.orientation.z[2])) or 0
-        rotationCframe = CFrame.Angles(xRot, yRot, zRot)
+        xRot = obstacleConfig.orientation.x and math.rad(math.random(obstacleConfig.orientation.x[1], obstacleConfig.orientation.x[2])) or 0
+        yRot = obstacleConfig.orientation.y and math.rad(math.random(obstacleConfig.orientation.y[1], obstacleConfig.orientation.y[2])) or 0
+        zRot = obstacleConfig.orientation.z and math.rad(math.random(obstacleConfig.orientation.z[1], obstacleConfig.orientation.z[2])) or 0
     end
 
+    if biasLocation and obstacleConfig.orientation and obstacleConfig.orientation.y then
+        local distanceXZ = (Vector3.new(lastPosition.x, 0, lastPosition.z) - Vector3.new(biasLocation.X, 0, biasLocation.Z)).Magnitude
+        if distanceXZ > 1000 then
+            local minYRot = math.rad(obstacleConfig.orientation.y[1])
+            local maxYRot = math.rad(obstacleConfig.orientation.y[2])
+
+            local directionToBias = (Vector3.new(biasLocation.X, 0, biasLocation.Z) - Vector3.new(xPos, 0, zPos)).Unit
+            local targetYRot = math.atan2(directionToBias.X, directionToBias.Z) -- Desired facing angle
+
+            -- Blend rotation towards target while staying within limits
+            local blendFactor = 0.5 -- Adjust this to control how strongly it shifts (0 = no change, 1 = full change)
+            local adjustedYRot = yRot + blendFactor * (targetYRot - yRot)
+
+            -- Clamp to allowed rotation range
+            yRot = math.clamp(adjustedYRot, minYRot, maxYRot)
+        end
+    end
+
+    rotationCframe = CFrame.Angles(xRot, yRot, zRot)
+
+    -- Size Calculation
     if obstacleConfig.size then
         local xSize = (obstacleConfig.size.x[1] == obstacleConfig.size.x[2]) and 1 or math.random(obstacleConfig.size.x[1], obstacleConfig.size.x[2])
         local ySize = (obstacleConfig.size.y[1] == obstacleConfig.size.y[2]) and 1 or math.random(obstacleConfig.size.y[1], obstacleConfig.size.y[2])
@@ -437,7 +384,6 @@ function Obstacle_Course_Generator.get_model_permuation_matrices(ObstacleModel)
     end
 
     return positionCframe, rotationCframe, sizeVector
-    
 end
 
 function Obstacle_Course_Generator.apply_permutations_to_groups(ObstacleModel)

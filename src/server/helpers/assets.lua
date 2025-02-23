@@ -73,4 +73,57 @@ function assetHelper.set_part_attribute_in_model(model, attributeName, changeTo)
     end
 end
 
+function assetHelper.get_bounding_box(model)
+    --[[
+    gets bounding box for a model object
+    --]]
+    if typeof(model) ~= "Instance" or not model:IsA("Model") then
+        error("Expected 'model' to be a Model instance, got " .. typeof(model))
+    end
+
+    if not model.PrimaryPart then return nil, nil end
+
+    local minBound, maxBound = nil, nil
+    local primaryCFrame = model.PrimaryPart.CFrame
+
+    for _, part in pairs(model:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local size = part.Size / 2
+            local partCFrame = part.CFrame
+
+            local localCorners = {
+                Vector3.new(-size.X, -size.Y, -size.Z),
+                Vector3.new(-size.X, -size.Y, size.Z),
+                Vector3.new(-size.X, size.Y, -size.Z),
+                Vector3.new(-size.X, size.Y, size.Z),
+                Vector3.new(size.X, -size.Y, -size.Z),
+                Vector3.new(size.X, -size.Y, size.Z),
+                Vector3.new(size.X, size.Y, -size.Z),
+                Vector3.new(size.X, size.Y, size.Z),
+            }
+
+            for _, localCorner in ipairs(localCorners) do
+                local worldCorner = partCFrame:PointToWorldSpace(localCorner)
+
+                if not minBound or not maxBound then
+                    minBound, maxBound = worldCorner, worldCorner
+                else
+                    minBound = Vector3.new(
+                        math.min(minBound.X, worldCorner.X),
+                        math.min(minBound.Y, worldCorner.Y),
+                        math.min(minBound.Z, worldCorner.Z)
+                    )
+                    maxBound = Vector3.new(
+                        math.max(maxBound.X, worldCorner.X),
+                        math.max(maxBound.Y, worldCorner.Y),
+                        math.max(maxBound.Z, worldCorner.Z)
+                    )
+                end
+            end
+        end
+    end
+
+    return minBound, maxBound
+end
+
 return assetHelper

@@ -45,7 +45,7 @@ local OBSTACLE_CONFIG = {
     ["Squares"] = {
         orientation = {
             y = {-30, 30},
-            x = {-30, 0},
+            x = {0, 30},
             --z  = {0, 30}
         }
     }
