@@ -8,7 +8,7 @@ local OBSTACLE_CONFIG = {
         
         orientation = {
             y = {-50, 50},
-            x = {0, 30}
+            x = {-30, 0}
             
         },
         groups = {
@@ -31,15 +31,22 @@ local OBSTACLE_CONFIG = {
     },
     ["Hanged Platforms"] = {
         orientation = {
-            y = {-30, 30},
-            x = {0, 30}
+            y = {0, 30},
+            x = {-30,  0}
         },
     },
     ["Zig Zag Tight Rope1"] = {
         orientation = {
             y = {-30, 30},
             --x = {-30, 30},
-            z  = {-30, 30}
+            z  = {0, 30}
+        }
+    },
+    ["Squares"] = {
+        orientation = {
+            y = {-30, 30},
+            x = {-30, 0},
+            --z  = {0, 30}
         }
     }
 }

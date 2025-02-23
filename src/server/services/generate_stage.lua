@@ -1,6 +1,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptsService = game:GetService("ServerScriptService")
 
+local GRID_SIZE = 100
+
 local assetHelper = require(ServerScriptsService.Server.helpers.assets)
 
 local Obstacle_Course_Generator = {
@@ -8,69 +10,324 @@ local Obstacle_Course_Generator = {
     ["stage_config"] = require(ServerScriptsService.Server.config.stage_config)
 }
 
+local function get_bounding_box(model)
+    if not model.PrimaryPart then return nil, nil end
+
+    local minBound, maxBound = nil, nil
+    local primaryCFrame = model.PrimaryPart.CFrame
+
+    for _, part in pairs(model:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local size = part.Size / 2 -- Half-size for AABB calculation
+            local partCFrame = part.CFrame
+
+            -- Compute the 8 corners in world space
+            local localCorners = {
+                Vector3.new(-size.X, -size.Y, -size.Z),
+                Vector3.new(-size.X, -size.Y, size.Z),
+                Vector3.new(-size.X, size.Y, -size.Z),
+                Vector3.new(-size.X, size.Y, size.Z),
+                Vector3.new(size.X, -size.Y, -size.Z),
+                Vector3.new(size.X, -size.Y, size.Z),
+                Vector3.new(size.X, size.Y, -size.Z),
+                Vector3.new(size.X, size.Y, size.Z),
+            }
+
+            for _, localCorner in ipairs(localCorners) do
+                local worldCorner = partCFrame:PointToWorldSpace(localCorner)
+
+                if not minBound or not maxBound then
+                    minBound, maxBound = worldCorner, worldCorner
+                else
+                    minBound = Vector3.new(
+                        math.min(minBound.X, worldCorner.X),
+                        math.min(minBound.Y, worldCorner.Y),
+                        math.min(minBound.Z, worldCorner.Z)
+                    )
+                    maxBound = Vector3.new(
+                        math.max(maxBound.X, worldCorner.X),
+                        math.max(maxBound.Y, worldCorner.Y),
+                        math.max(maxBound.Z, worldCorner.Z)
+                    )
+                end
+            end
+        end
+    end
+
+    return minBound, maxBound
+end
+
+local function addObstacleToGrid(obstacle, grid_table, obstacle_to_grids)
+    local minBound, maxBound = get_bounding_box(obstacle)
+    if not minBound or not maxBound then return end
+
+    local grid_min = Vector3.new(
+        math.floor(minBound.X / GRID_SIZE),
+        math.floor(minBound.Y / GRID_SIZE),
+        math.floor(minBound.Z / GRID_SIZE)
+    )
+    local grid_max = Vector3.new(
+        math.floor(maxBound.X / GRID_SIZE),
+        math.floor(maxBound.Y / GRID_SIZE),
+        math.floor(maxBound.Z / GRID_SIZE)
+    )
+
+    local occupied_cells = {}
+    for x = grid_min.X, grid_max.X do
+        for y = grid_min.Y, grid_max.Y do
+            for z = grid_min.Z, grid_max.Z do
+                local key = x .. "_" .. y .. "_" .. z
+                if not grid_table[key] then grid_table[key] = {} end
+                table.insert(grid_table[key], obstacle)
+                table.insert(occupied_cells, key)
+            end
+        end
+    end
+
+    obstacle_to_grids[obstacle] = occupied_cells
+end
+
+-- Utility: Remove an obstacle from the grid table (for backtracking)
+local function removeObstacleFromGrid(obstacle, grid_table, obstacle_to_grids)
+    local cells = obstacle_to_grids[obstacle]
+    if cells then
+        for _, key in ipairs(cells) do
+            if grid_table[key] then
+                for i = #grid_table[key], 1, -1 do
+                    if grid_table[key][i] == obstacle then
+                        table.remove(grid_table[key], i)
+                    end
+                end
+                if #grid_table[key] == 0 then
+                    grid_table[key] = nil
+                end
+            end
+        end
+        obstacle_to_grids[obstacle] = nil
+    end
+end
+
+function Obstacle_Course_Generator.check_collision_grid(newObstacle, grid_table)
+    local newCheckpoint = newObstacle:GetAttribute("checkpoint_num")
+    local newMin, newMax = get_bounding_box(newObstacle)
+    if not newMin or not newMax then return false end
+
+    local grid_min = Vector3.new(
+        math.floor(newMin.X / GRID_SIZE),
+        math.floor(newMin.Y / GRID_SIZE),
+        math.floor(newMin.Z / GRID_SIZE)
+    )
+    local grid_max = Vector3.new(
+        math.floor(newMax.X / GRID_SIZE),
+        math.floor(newMax.Y / GRID_SIZE),
+        math.floor(newMax.Z / GRID_SIZE)
+    )
+
+    -- Compute the expanded bounding box for newObstacle.
+    local newCenter = (newMin + newMax) * 0.5
+    local newSize = newMax - newMin
+
+    local MIN_BOUND_SIZE = Vector3.new(10, 20, 10)
+
+    newSize = Vector3.new(
+        math.max(newSize.X, MIN_BOUND_SIZE.X),
+        math.max(newSize.Y, MIN_BOUND_SIZE.Y),
+        math.max(newSize.Z, MIN_BOUND_SIZE.Z)
+    )
+
+
+    local expandedNewHalf = (newSize * 2)
+    local expandedNewMin = newCenter - expandedNewHalf
+    local expandedNewMax = newCenter + expandedNewHalf
+
+    -- Check in the current grid cells plus a 1-cell margin in all directions
+    for x = grid_min.X - 1, grid_max.X + 1 do
+        for y = grid_min.Y - 1, grid_max.Y + 1 do
+            for z = grid_min.Z - 1, grid_max.Z + 1 do
+                local key = x .. "_" .. y .. "_" .. z
+                local obstacles_in_cell = grid_table[key]
+                if obstacles_in_cell then
+                    for _, obstacle in ipairs(obstacles_in_cell) do
+                        local otherCheckpoint = obstacle:GetAttribute("checkpoint_num")
+                        if otherCheckpoint ~= nil and (newCheckpoint - otherCheckpoint > 2) then
+                            local otherMin, otherMax = get_bounding_box(obstacle)
+                            if otherMin and otherMax then
+                                local otherCenter = (otherMin + otherMax) * 0.5
+                                local otherSize = otherMax - otherMin
+                                local expandedOtherHalf = (otherSize * 1.5) * 0.5
+                                local expandedOtherMin = otherCenter - expandedOtherHalf
+                                local expandedOtherMax = otherCenter + expandedOtherHalf
+
+                                if (expandedNewMin.X <= expandedOtherMax.X and expandedNewMax.X >= expandedOtherMin.X) and
+                                   (expandedNewMin.Y <= expandedOtherMax.Y and expandedNewMax.Y >= expandedOtherMin.Y) and
+                                   (expandedNewMin.Z <= expandedOtherMax.Z and expandedNewMax.Z >= expandedOtherMin.Z) then
+                                    print("Collision detected with obstacle:", obstacle.Name)
+                                    return true
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return false
+end
+
+-- Modified generate_obstacle_course using grid–based collision detection.
 function Obstacle_Course_Generator.generate_obstacle_course(seed)
-    --[[
-    (seed: str) -> model
-
-    This function generates an obstacle course with random properties based on the seed
-    given if there is no seed given will use the current date
-    --]]
-    
-    -- set the seed so the course is generated the same way
     math.randomseed(seed)
-
+    
+    local obstacleCourseModel = Instance.new("Model")
+    obstacleCourseModel.Name = "ObstacleCourse"
+    obstacleCourseModel.Parent = workspace
+    
+    local checkpointsFolder = Instance.new("Folder")
+    checkpointsFolder.Name = "Checkpoints"
+    checkpointsFolder.Parent = obstacleCourseModel
+    
+    local obstaclesFolder = Instance.new("Folder")
+    obstaclesFolder.Name = "Obstacles"
+    obstaclesFolder.Parent = obstacleCourseModel
+    
     local obstacleNames = {}
     for key, _ in pairs(Obstacle_Course_Generator.obstacle_config) do
         if key ~= "Checkpoint" then
             table.insert(obstacleNames, key)
         end
     end
-
+    
     local assetsFolder = ReplicatedStorage:WaitForChild("assets")
     local objectFolder = assetsFolder:WaitForChild("obstacles")
-
     local checkpointModel = assetsFolder:WaitForChild("Checkpoint")
-
-
+    
     local numObstacles = math.random(
         Obstacle_Course_Generator.stage_config.number_of_obstacles[1], 
         Obstacle_Course_Generator.stage_config.number_of_obstacles[2]
     )
-
-    local lastObstacle = checkpointModel:Clone()
-    lastObstacle.Parent = workspace
-
-    for i = 1, numObstacles do
-        local curCheckpoint = checkpointModel:Clone()
-        curCheckpoint.Parent = workspace
-
-        assetHelper.set_part_attribute_in_model(curCheckpoint, "Anchored", false)
-        Obstacle_Course_Generator.move_obstacle_to_last_location(lastObstacle, curCheckpoint)
-        assetHelper.set_part_attribute_in_model(curCheckpoint, "Anchored", true)
-
-        lastObstacle = curCheckpoint
-        
-        -- Generate the current obstacle
-        local curObstacleInd = math.random(1, #obstacleNames)  -- Corrected the index here
-        local curObstacleName = obstacleNames[curObstacleInd]
-        local curObstacleModel = objectFolder:WaitForChild(curObstacleName):Clone()
-
-        
-        Obstacle_Course_Generator.move_obstacle_to_last_location(lastObstacle, curObstacleModel)
-        Obstacle_Course_Generator.apply_permutations_to_groups(curObstacleModel)
-        -- Move the new obstacle in front of the last one
-
-        -- Set the position of the new obstacle based on the last obstacle's location
-        curObstacleModel.Parent = workspace
-
-        -- Update lastObstacle to the current obstacle
-        lastObstacle = curObstacleModel
-        
     
-    end
+    -- Create final checkpoint
+    local finalCheckpoint = checkpointModel:Clone()
+    finalCheckpoint.Parent = checkpointsFolder
+    finalCheckpoint:SetAttribute("checkpoint_num", 0)
+    obstacleCourseModel.PrimaryPart = finalCheckpoint.PrimaryPart
 
-    return nil
+    -- Set up grid tables:
+    local grid_table = {}          -- Maps grid cell keys to a list of obstacles in that cell.
+    local obstacle_to_grids = {}   -- Maps each obstacle to the grid cells it occupies.
+    
+    local function try_place(index, lastObstacle)
+        
+        task.wait()
+        
+
+        print("Attempting placement after:", lastObstacle.Name, lastObstacle:GetAttribute("checkpoint_num"))
+        if index > numObstacles then 
+            return true 
+        end
+    
+        local newObstacle = nil
+        local ParentsFolder = nil
+    
+        if lastObstacle.Name ~= "Checkpoint" then
+            newObstacle = checkpointModel:Clone()
+            ParentsFolder = checkpointsFolder
+        else
+            local curObstacleInd = math.random(1, #obstacleNames)
+            local curObstacleName = obstacleNames[curObstacleInd]
+            newObstacle = objectFolder:WaitForChild(curObstacleName):Clone()
+            ParentsFolder = obstaclesFolder
+        end
+    
+        newObstacle:SetAttribute("checkpoint_num", index)
+        local MAX_ATTEMPTS = 10
+        -- For non-checkpoint obstacles, we increment index by one after placement.
+        local newInd = (newObstacle.Name == "Checkpoint") and index or index + 1
+        local origCframe = newObstacle.PrimaryPart.CFrame
+        newObstacle.Parent = ParentsFolder
+    
+        for i = 1, MAX_ATTEMPTS do
+            newObstacle:SetPrimaryPartCFrame(origCframe)
+            assetHelper.set_part_attribute_in_model(newObstacle, "Anchored", false)
+    
+            Obstacle_Course_Generator.apply_permutations_to_groups(newObstacle)
+            Obstacle_Course_Generator.move_obstacle_to_last_location(lastObstacle, newObstacle)
+    
+            assetHelper.set_part_attribute_in_model(newObstacle, "Anchored", true)
+            
+            -- Use the grid–based collision check instead of raycasting.
+            if Obstacle_Course_Generator.check_collision_grid(newObstacle, grid_table) then
+                continue
+            end
+
+
+            -- If valid, add the obstacle to the grid table.
+            addObstacleToGrid(newObstacle, grid_table, obstacle_to_grids)
+            
+            if try_place(newInd, newObstacle) then
+                return true
+            end
+
+            if newObstacle.Name == "Checkpoint" then
+                break
+            end
+
+            -- Backtracking: remove this obstacle from the grid since subsequent placement failed.
+            removeObstacleFromGrid(newObstacle, grid_table, obstacle_to_grids)
+        end
+
+        print("Backtracking from obstacle", newObstacle.Name)
+        newObstacle:Destroy()
+        return false
+    end
+    
+    if not try_place(1, finalCheckpoint) then
+        obstacleCourseModel:Destroy()
+        error("Failed to generate obstacle course with backtracking")
+        return nil
+    end
+    
+    return obstacleCourseModel
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Revised placement function with improved physics update and logging.
 
 function Obstacle_Course_Generator.move_obstacle_to_last_location(lastObjectModel, newObstacle)
     --[[ 
@@ -80,6 +337,8 @@ function Obstacle_Course_Generator.move_obstacle_to_last_location(lastObjectMode
 
     -- Set obstacle to beginning
     newObstacle:SetPrimaryPartCFrame(CFrame.new())
+
+    --print(lastObjectModel, newObstacle)
 
     local lastFrontPart = assetHelper.find_part(lastObjectModel, "Front")
     local lastBackPart = assetHelper.find_part(lastObjectModel, "Back")
@@ -131,8 +390,6 @@ function Obstacle_Course_Generator.move_obstacle_to_last_location(lastObjectMode
         end
     end
 
-    -- Parent it to workspace
-    newObstacle.Parent = workspace
 end
 
 function Obstacle_Course_Generator.get_model_permuation_matrices(ObstacleModel)
