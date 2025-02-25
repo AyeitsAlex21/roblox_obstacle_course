@@ -25,6 +25,12 @@
       "$path": "src/storage"
     },
 
+    "StarterGui": {
+      "ShopGui": {
+        "$path": "src/StarterGui/ShopGui"
+      }
+    },
+
     "Workspace": {
       "$properties": {
         "FilteringEnabled": true,

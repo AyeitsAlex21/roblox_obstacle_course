@@ -75,15 +75,17 @@ end
 
 function Local.RemoveProfile(player: Player)
 	local profile = Profiles[player]
-	if profile ~= nil then
+	if profile then
 		profile:EndSession()
 	end
 end
 
 function Shared.GetData(player:Player): DataTemplate.PlayerData?
 	local profile = Profiles[player]
-	if not profile then return end
-	return profile.Data
+	if profile then
+		return profile.Data
+	end
+	return nil
 end
 
 --update
