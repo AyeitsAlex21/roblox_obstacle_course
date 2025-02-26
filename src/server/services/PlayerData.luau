@@ -32,7 +32,9 @@ Shared.DEFAULT_PLAYER_DATA = DEFAULT_PLAYER_DATA
 
 Shared.DEFAULT_PLAYER_DATA = {
     time = 0,
-    deaths = 0
+    deaths = 0,
+    coins = 0,
+	gems = 1_000
 }
 
 export type PlayerData = typeof(Shared.DEFAULT_PLAYER_DATA)

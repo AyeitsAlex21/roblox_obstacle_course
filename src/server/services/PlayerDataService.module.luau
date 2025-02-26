@@ -39,6 +39,8 @@ local Shared = {}
 -- Lookup table for storing each players time instance
 local playerTimers = {}
 
+--A BindableEvent lets different parts of the client code listen for
+-- or fire events without using RemoteEvents (which are for client-server communication)
 Shared.ProfileLoaded = Instance.new("BindableEvent")
 
 -- Onstart function can be used by other scripts
