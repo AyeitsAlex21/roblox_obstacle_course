@@ -132,6 +132,9 @@ function Obstacle_Course_Generator:generate_obstacle_course(seed, numberObstacle
     
     -- Create final checkpoint
     local firstCheckpoint = checkpointModel:Clone()
+    assetHelper.set_part_attribute_in_model(firstCheckpoint, "Anchored", false)
+    assetHelper.set_part_attribute_in_model(firstCheckpoint, "Anchored", true)
+
     firstCheckpoint.Parent = checkpointsFolder
     firstCheckpoint:SetAttribute("checkpoint_num", 0)
     obstacleCourseModel.PrimaryPart = firstCheckpoint.PrimaryPart
