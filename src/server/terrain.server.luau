@@ -8,11 +8,9 @@ local function createTerrain()
     local Obstacle_Generator = require(ServerScriptsService:WaitForChild("Server"):WaitForChild("services"):WaitForChild("generate_stage"))
     
 
-    local stageModel = Obstacle_Generator.generate_obstacle_course(1234)
+    local ObGenObj = Obstacle_Generator.new()
+    local stageModel = ObGenObj:generate_obstacle_course(3, 1000)
     stageModel.Parent = workspace
-
-
-    
 
 end
 
