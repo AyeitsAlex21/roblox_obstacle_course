@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local ServerScriptsService = game:GetService("ServerScriptService")
-
+local StarterPlayer = game:GetService("StarterPlayer")
 
 
 -- server/env/terrain.lua
@@ -17,6 +17,7 @@ local function createTerrain()
     --local Obstacle_Generator = require(ServerScriptsService:WaitForChild("Server"):WaitForChild("services"):WaitForChild("generate_stage"))
     local PlayerDataService = require(ServerScriptsService.Server.services["PlayerDataService.module"])
     PlayerDataService.OnStart()
+
     --local RespawnService = require(ServerScriptsService.Server.services["RespawnService.module"])
     --RespawnService.Onstart()
     

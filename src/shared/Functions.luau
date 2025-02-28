@@ -1,6 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptsService = game:GetService("ServerScriptService")
-local PlayerData = require(ServerScriptsService.Server.services["PlayerData"])
+local PlayerData = require(ReplicatedStorage["PlayerData"])
 export type PlayerData = PlayerData.PlayerData
 
 export type UpdateDataAction = {

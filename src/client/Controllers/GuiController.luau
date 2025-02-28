@@ -1,14 +1,12 @@
 local Players = game:GetService("Players")
-
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
-local Local = {}
+local ShopGui = PlayerGui:WaitForChild("ShopGui")
 local Shared = {}
-
 Shared.Guis = {
-	Right = PlayerGui:WaitForChild("Right"),
-    Shop = PlayerGui:WaitForChild("Shop"),
+    Right = ShopGui:WaitForChild("Right"),
+    Shop = ShopGui:WaitForChild("Shop"),
 }
 
 return Shared

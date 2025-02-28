@@ -7,7 +7,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 --export type UpdateStateAction = UpdateState.UpdateStateAction
 
 -- ProfileService library makes securely manager the players data simple and reliable
-local DataTemplate = require(ServerScriptService.Server.services.PlayerData)
+local DataTemplate = require(ReplicatedStorage.PlayerData)
 local ProfileStore = require(ServerScriptService.Server.Libs["ProfileStore"])
 local UpdateState = require(ReplicatedStorage.Functions)
 

@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local UpdateState = require(ReplicatedStorage.Functions)
-local Remotes = ReplicatedStorage.Remotes.PlayerData
+local Remotes = ReplicatedStorage.PlayerData
 
 export type StateAction = UpdateState.UpdateDataAction
 export type PlayerData = UpdateState.PlayerData
@@ -13,7 +13,6 @@ local Shared = {}
 
 Shared.UpdateState = Instance.new("BindableEvent")
 function Shared.OnStart()
-
 	Remotes.SetState.OnClientEvent:Connect(function(playerData: PlayerData)
 		State = playerData
 	end)

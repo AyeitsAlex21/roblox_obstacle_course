@@ -1,4 +1,5 @@
 local Players = game:GetService("Players")
+local StarterPlayer = game:GetService("StarterPlayer")
 
 local Player = Players.LocalPlayer
 
@@ -29,5 +30,8 @@ function Local.UpdateCurrency(currency: string)
 		Gems.Amount.Text = StateController.GetState().gems
 	end
 end
+
+Shared.OnStart()
+
 
 return Shared

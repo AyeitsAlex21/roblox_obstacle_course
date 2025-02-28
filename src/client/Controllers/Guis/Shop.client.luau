@@ -1,3 +1,13 @@
+print("fSWAffsFsZFGgzdesrgzdghxdzseghzsxedthzxdrhh")
+local guiControllerModule = script.Parent.Parent:FindFirstChild("GuiController")
+if guiControllerModule then
+	print("GuiController found:", guiControllerModule.Name, guiControllerModule.ClassName)
+else
+	print("GuiController not found!")
+end
+
+
+local StarterPlayer = game:GetService("StarterPlayer")
 local GuiController = require(script.Parent.Parent.GuiController)
 
 
@@ -21,7 +31,16 @@ function Shared.OnStart()
 end
 
 function Local.UpdateEnabled()
-    Gui.Enabled = not Gui.Enabled
+	print("Button clicked. Toggling UI...")
+	if Gui:IsA("ScreenGui") then
+		Gui.Enabled = not Gui.Enabled
+		print("Toggled Enabled to:", Gui.Enabled)
+	else
+		Gui.Visible = not Gui.Visible
+		print("Toggled Visible to:", Gui.Visible)
+	end
 end
+
+Shared.OnStart()
 
 return Shared
