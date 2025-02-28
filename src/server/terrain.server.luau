@@ -4,20 +4,30 @@ local ServerScriptsService = game:GetService("ServerScriptService")
 
 -- server/env/terrain.lua
 local function createTerrain()
-    -- A hill part
-    local hill = Instance.new("Part")
-    hill.Size = Vector3.new(50, 20, 50)
-    hill.Position = Vector3.new(100, 10, 100)
-    hill.Color = Color3.fromRGB(139, 69, 19)  -- brown
-    hill.Anchored = true
-    hill.Parent = game.Workspace
 
     local Obstacle_Generator = require(ServerScriptsService:WaitForChild("Server"):WaitForChild("services"):WaitForChild("generate_stage"))
     
-    Obstacle_Generator.generate_obstacle_course(123)
 
-    
+    local ObGenObj = Obstacle_Generator.new()
+    local stageModel = ObGenObj:generate_obstacle_course(3, 1000)
+    stageModel.Parent = workspace
 
 end
+
+local RunService = game:GetService("RunService")
+local frameCount = 0
+local elapsedTime = 0
+
+RunService.Heartbeat:Connect(function(deltaTime)
+    frameCount = frameCount + 1
+    elapsedTime = elapsedTime + deltaTime
+
+    if elapsedTime >= 1 then
+        print("Server FPS (approx):", frameCount)
+        frameCount = 0
+        elapsedTime = 0
+    end
+end)
+
 
 createTerrain()  -- Call the function to generate the environment

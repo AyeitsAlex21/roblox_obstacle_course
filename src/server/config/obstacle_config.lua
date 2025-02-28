@@ -1,19 +1,52 @@
 local OBSTACLE_CONFIG = {
-    ["Three Lanes Obstacle"] = {
+    ["Checkpoint"] = {
         orientation = {
-            x = {0, 0},
-            y = {-30, 0},
-            z = {-20, 20}
+            y = {-90, 90},
+        }
+    },
+    ["Three Lanes Obstacle"] = {
+        
+        orientation = {
+            y = {-50, 50},
+            x = {-30, 0}
+            
         },
-        size = {
-            x = {1, 1},
-            y = {1, 1},
-            z = {1, 1}
+        groups = {
+            ["Group1"] = {
+                orientation = {
+                    x = {-90, 90},
+                }
+            },
+            ["Group2"] = {
+                orientation = {
+                    x = {-90, 90},
+                }
+            },
+            ["Group3"] = {
+                orientation = {
+                    x = {-90, 90},
+                }
+            },
+        }
+    },
+    ["Hanged Platforms"] = {
+        orientation = {
+            y = {0, 30},
+            x = {-30,  0}
         },
-        position = {
-            x = {5, -5},
-            y = {-2, 5},
-            z = {-5, 5}
+    },
+    ["Zig Zag Tight Rope1"] = {
+        orientation = {
+            y = {-30, 30},
+            --x = {-30, 30},
+            z  = {0, 30}
+        }
+    },
+    ["Squares"] = {
+        orientation = {
+            y = {-30, 30},
+            x = {0, 30},
+            --z  = {0, 30}
         }
     }
 }
