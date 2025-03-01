@@ -2,6 +2,11 @@ local OBSTACLE_CONFIG = {
     ["Checkpoint"] = {
         orientation = {
             y = {-90, 90},
+        },
+        event_info = {
+            event_name = "Checkpoint",
+            apply_to = "Middle",
+            event_trigger = "Touched"
         }
     },
     ["Three Lanes Obstacle"] = {

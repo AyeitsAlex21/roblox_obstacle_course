@@ -6,10 +6,10 @@
     "ReplicatedStorage": {
       "$path": "src/shared",
 
-      "Events": {
+      "RemoteEvents": {
         "$className": "Folder",
 
-        "CheckpointEvent": {
+        "Checkpoint": {
           "$className": "RemoteEvent"
         }
       }

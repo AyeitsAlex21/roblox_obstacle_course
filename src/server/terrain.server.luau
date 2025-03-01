@@ -9,7 +9,7 @@ local function createTerrain()
     
 
     local ObGenObj = Obstacle_Generator.new()
-    local stageModel = ObGenObj:generate_obstacle_course(3, 1000)
+    local stageModel = ObGenObj:generate_obstacle_course(3, 100)
     stageModel.Parent = workspace
 
 end

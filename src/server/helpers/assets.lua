@@ -25,6 +25,28 @@ function assetHelper.find_part(model, name)
 
 end
 
+function assetHelper.apply_touched_event_to_part_name(model, eventFunction, partName)
+    if typeof(model) ~= "Instance" or not model:IsA("Model") then
+        error("Expected 'model' to be a Model instance, got " .. typeof(model))
+    end
+
+    for _, descendant in pairs(model:GetDescendants()) do
+        if descendant:IsA("BasePart") and descendant.Name == partName then
+            descendant.Touched:Connect(function(hit)
+
+                eventFunction(descendant, hit)
+            end)
+
+            print("APPLIED")
+            return true -- Successfully connected event
+        end
+    end
+
+    -- No matching part found
+    error(string.format("In assetHelper.apply_event_to_part_name: part with the name '%s' not found in model '%s'", partName, model.Name))
+    return false
+end
+
 function assetHelper.find_model(model, name)
     --[[
     (model: Model, name: str) -> Model
