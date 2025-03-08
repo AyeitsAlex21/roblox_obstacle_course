@@ -4,13 +4,22 @@
     "$className": "DataModel",
 
     "ReplicatedStorage": {
-      "$path": "src/shared"
+      "$path": "src/shared",
+
+      "RemoteEvents": {
+        "$className": "Folder",
+
+        "Checkpoint": {
+          "$className": "RemoteEvent"
+        }
+      }
     },
 
     "ServerScriptService": {
       "Server": {
         "$path": "src/server"
       }
+      
     },
 
     "StarterPlayer": {

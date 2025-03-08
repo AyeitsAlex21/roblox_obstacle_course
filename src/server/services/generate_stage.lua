@@ -1,6 +1,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptsService = game:GetService("ServerScriptService")
 
+local EventHandlers = ServerScriptsService:WaitForChild("Server"):WaitForChild("event_handlers")
+
 local assetHelper = require(ServerScriptsService.Server.helpers.assets)
 
 local Obstacle_Course_Generator = {}
@@ -135,8 +137,13 @@ function Obstacle_Course_Generator:generate_obstacle_course(seed, numberObstacle
     assetHelper.set_part_attribute_in_model(firstCheckpoint, "Anchored", false)
     assetHelper.set_part_attribute_in_model(firstCheckpoint, "Anchored", true)
 
+
     firstCheckpoint.Parent = checkpointsFolder
     firstCheckpoint:SetAttribute("checkpoint_num", 0)
+
+    -- put the checkpoint handler on the first checkpoint
+    self:apply_event_handlers(firstCheckpoint)
+
     obstacleCourseModel.PrimaryPart = firstCheckpoint.PrimaryPart
 
     -- Set up grid tables:
@@ -150,7 +157,7 @@ function Obstacle_Course_Generator:generate_obstacle_course(seed, numberObstacle
         --task.wait()
 
         -- if true done placing obstacles end recursion
-        if index > numObstacles then 
+        if index >= numObstacles then 
             return true 
         end
     
@@ -200,7 +207,9 @@ function Obstacle_Course_Generator:generate_obstacle_course(seed, numberObstacle
             -- If valid, add the obstacle to the grid table.
             Obstalce_Grid.addObstacleToGrid(newObstacle, GridTable, obstacle_to_grids, self.stage_config.grid_size)
             
+            -- if successfully place future parts end recursion add the events handlers
             if try_place(newInd, newObstacle) then
+                self:apply_event_handlers(newObstacle)
                 return true
             end
  
@@ -217,7 +226,7 @@ function Obstacle_Course_Generator:generate_obstacle_course(seed, numberObstacle
         return false
     end
     
-    if not try_place(1, firstCheckpoint) then
+    if not try_place(0, firstCheckpoint) then
         obstacleCourseModel:Destroy()
         return nil
     end
@@ -416,6 +425,38 @@ function Obstacle_Course_Generator:apply_permutations_to_groups(ObstacleModel)
     end
 
     return nil
+end
+
+function Obstacle_Course_Generator:apply_event_handlers(ObstacleModel)
+    --[[
+    This function applies events to objects that have the configuration for it
+    in the obstacle config file
+    --]]
+
+    local obstacleName = ObstacleModel.Name
+    local obstacleConfig = self.obstacle_config[obstacleName]
+
+    -- if obstacle does not have an event config skip
+    if not obstacleConfig or not obstacleConfig.event_info then
+        return nil
+    end
+
+    local eventName = obstacleConfig.event_info["event_name"]
+    local eventFunction = require(EventHandlers:WaitForChild(eventName))
+    local eventTrigger = obstacleConfig.event_info.event_trigger
+
+    if eventTrigger == "Touched" then
+        assetHelper.apply_touched_event_to_part_name(
+            ObstacleModel, 
+            eventFunction,
+            obstacleConfig.event_info.apply_to
+        )
+
+    else
+        error("Event Trigger '%s' not found", obstacleConfig.event_info.event_trigger)
+
+    end
+    
 end
 
 function Obstalce_Grid.addObstacleToGrid(obstacle, grid_table, obstacle_to_grids, GRID_SIZE)
