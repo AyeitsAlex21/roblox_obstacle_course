@@ -137,8 +137,13 @@ function Obstacle_Course_Generator:generate_obstacle_course(seed, numberObstacle
     assetHelper.set_part_attribute_in_model(firstCheckpoint, "Anchored", false)
     assetHelper.set_part_attribute_in_model(firstCheckpoint, "Anchored", true)
 
+
     firstCheckpoint.Parent = checkpointsFolder
     firstCheckpoint:SetAttribute("checkpoint_num", 0)
+
+    -- put the checkpoint handler on the first checkpoint
+    self:apply_event_handlers(firstCheckpoint)
+
     obstacleCourseModel.PrimaryPart = firstCheckpoint.PrimaryPart
 
     -- Set up grid tables:
@@ -152,7 +157,7 @@ function Obstacle_Course_Generator:generate_obstacle_course(seed, numberObstacle
         --task.wait()
 
         -- if true done placing obstacles end recursion
-        if index > numObstacles then 
+        if index >= numObstacles then 
             return true 
         end
     
@@ -221,7 +226,7 @@ function Obstacle_Course_Generator:generate_obstacle_course(seed, numberObstacle
         return false
     end
     
-    if not try_place(1, firstCheckpoint) then
+    if not try_place(0, firstCheckpoint) then
         obstacleCourseModel:Destroy()
         return nil
     end

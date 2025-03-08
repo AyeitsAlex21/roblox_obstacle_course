@@ -34,7 +34,7 @@ function assetHelper.apply_touched_event_to_part_name(model, eventFunction, part
         if descendant:IsA("BasePart") and descendant.Name == partName then
             descendant.Touched:Connect(function(hit)
 
-                eventFunction(descendant, hit)
+                eventFunction(model, hit)
             end)
 
             print("APPLIED")
