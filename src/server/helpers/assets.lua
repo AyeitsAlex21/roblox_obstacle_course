@@ -36,8 +36,7 @@ function assetHelper.apply_touched_event_to_part_name(model, eventFunction, part
 
                 eventFunction(model, hit)
             end)
-
-            print("APPLIED")
+            
             return true -- Successfully connected event
         end
     end

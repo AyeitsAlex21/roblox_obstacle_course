@@ -1,0 +1,40 @@
+local ServerScriptService = game:GetService("ServerScriptService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local MemoryStoreService = game:GetService("MemoryStoreService")
+
+local timeHelper = require(ServerScriptService.Server.helpers.times)
+local midnightJobs = require(ServerScriptService.Server.services.midnight_jobs)
+local semaphoreService = require(ServerScriptService.Server.services.server_communication.semaphore)
+
+local mutexLock = semaphoreService.new("stage_generation", 30) -- 1/2 mintues then lock expires
+
+local function triggerMidnightEvent()
+    print("Midnight event triggered! Firing RemoteEvent...")
+    
+
+    local ObstacleCourseModel = midnightJobs.make_obstacle_courses()
+
+
+    local timeUntilNextMidnight = timeHelper.getTimeUntilMidnightPST()
+    print("Next midnight event scheduled in " .. timeUntilNextMidnight .. " seconds.")
+    task.delay(timeUntilNextMidnight, triggerMidnightEvent)
+end
+
+
+local function attemptToBeJobServer() {
+    -- if one of the servers gets the lock then do the midnight event
+    -- otherwise try later
+    if mutexLock:TryLock() then
+        triggerMidnightEvent()
+    end
+
+    task.delay(
+        timeHelper.getTimeUntilMidnightPST(), 
+        attemptToBeJobServer
+    )
+}
+
+task.delay(
+    1,--timeHelper.getTimeUntilMidnightPST(), 
+    attemptToBeJobServer
+)

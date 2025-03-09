@@ -29,5 +29,4 @@ RunService.Heartbeat:Connect(function(deltaTime)
     end
 end)
 
-
 createTerrain()  -- Call the function to generate the environment
