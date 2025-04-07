@@ -25,6 +25,204 @@ function Obstacle_Course_Generator.new()
     return self
 end
 
+function Obstacle_Course_Generator:deserialize_obstacle_course(serializedData)
+    local obstacleCourseModel = Instance.new("Model")
+    obstacleCourseModel.Name = "ObstacleCourse"
+
+    -- Decode the JSON data
+    local data = game:GetService("HttpService"):JSONDecode(serializedData)
+
+    -- Loop through each folder in the serialized data
+    for folderName, folderData in pairs(data) do
+        local folder = Instance.new("Folder")
+        folder.Name = folderName
+        folder.Parent = obstacleCourseModel
+
+        -- Loop through each item in the folder
+        for _, itemData in ipairs(folderData) do
+            -- Clone the model from ReplicatedStorage
+            local itemModel = ReplicatedStorage:WaitForChild("assets"):WaitForChild("obstacles"):WaitForChild(itemData.name):Clone()
+            assetHelper.set_part_attribute_in_model(itemModel, "Anchored", false)
+            itemModel.Name = itemData.name
+
+            -- Set the PrimaryPart's position, orientation, and size
+            if itemModel.PrimaryPart then
+                itemModel.PrimaryPart.Size = Vector3.new(unpack(itemData.size))
+                itemModel:SetPrimaryPartCFrame(
+                    CFrame.new(unpack(itemData.position)) * CFrame.Angles(
+                        math.rad(itemData.orientation[1]),
+                        math.rad(itemData.orientation[2]),
+                        math.rad(itemData.orientation[3])
+                    )
+                )
+            end
+
+            -- Apply attributes
+            for attributeName, attributeValue in pairs(itemData.attributes) do
+                itemModel:SetAttribute(attributeName, attributeValue)
+            end
+
+            -- Add scripts
+            for _, scriptData in ipairs(itemData.scripts) do
+                local script = Instance.new("Script")
+                script.Name = scriptData.name
+                script.Source = scriptData.source
+                script.Parent = itemModel
+            end
+
+            -- Process groups
+            for _, groupData in ipairs(itemData.groups) do
+                local groupModel = assetHelper.find_model(itemModel, groupData.name)
+                if groupModel and groupModel.PrimaryPart then
+                    -- Set the group's PrimaryPart's position, orientation, and size
+                    groupModel.PrimaryPart.Size = Vector3.new(unpack(groupData.size))
+
+                    --[[
+                    TODO you are saving the rotation of the object in its entierity
+                    also saving the groups rotation. so you are applying the rotation twice
+                    instead of doing the objects rotation then the sub groups rotation
+                    --]]
+                    groupModel:SetPrimaryPartCFrame(
+                        CFrame.new(unpack(groupData.position)) * CFrame.Angles(
+                            math.rad(groupData.orientation[1]),
+                            math.rad(groupData.orientation[2]),
+                            math.rad(groupData.orientation[3])
+                        )
+                    )
+
+                    -- Apply group attributes
+                    for attributeName, attributeValue in pairs(groupData.attributes) do
+                        groupModel:SetAttribute(attributeName, attributeValue)
+                    end
+
+                    -- Add group scripts
+                    for _, scriptData in ipairs(groupData.scripts) do
+                        local script = Instance.new("Script")
+                        script.Name = scriptData.name
+                        script.Source = scriptData.source
+                        script.Parent = groupModel
+                    end
+                end
+            end
+
+            assetHelper.set_part_attribute_in_model(itemModel, "Anchored", true)
+
+            itemModel.Parent = folder
+        end
+    end
+
+    return obstacleCourseModel
+end
+
+function Obstacle_Course_Generator:serialize_obstacle_course(obstacleCourseModel)
+    local serializedData = {}
+
+    -- Loop through all folders in the obstacle course model
+    for _, folder in ipairs(obstacleCourseModel:GetChildren()) do
+        if folder:IsA("Folder") then
+            local folderData = {}
+
+            -- Loop through each item in the folder
+            for _, item in ipairs(folder:GetChildren()) do
+                if item:IsA("Model") and item.PrimaryPart then
+                    local itemData = {
+                        name = item.Name,
+                        position = { 
+                            item.PrimaryPart.Position.X, 
+                            item.PrimaryPart.Position.Y, 
+                            item.PrimaryPart.Position.Z 
+                        },
+                        orientation = { 
+                            item.PrimaryPart.Orientation.X, 
+                            item.PrimaryPart.Orientation.Y, 
+                            item.PrimaryPart.Orientation.Z 
+                        },
+                        size = { 
+                            item.PrimaryPart.Size.X, 
+                            item.PrimaryPart.Size.Y, 
+                            item.PrimaryPart.Size.Z 
+                        },
+                        attributes = {},
+                        scripts = {},
+                        groups = {}
+                    }
+
+                    -- Store attributes
+                    for attributeName, attributeValue in pairs(item:GetAttributes()) do
+                        itemData.attributes[attributeName] = attributeValue
+                    end
+
+                    -- Store scripts
+                    for _, script in ipairs(item:GetChildren()) do
+                        if script:IsA("Script") or script:IsA("LocalScript") then
+                            table.insert(itemData.scripts, {
+                                name = script.Name,
+                                source = script.Source
+                            })
+                        end
+                    end
+
+                    -- store group info
+                    local obstacleConfig = self.obstacle_config[item.Name]
+                    if obstacleConfig and obstacleConfig.groups then
+                        for groupName, _ in pairs(obstacleConfig.groups) do
+
+                            local groupModel = assetHelper.find_model(item, groupName)
+
+                            if not groupModel then
+                                continue
+                            end
+
+                            local groupData = {
+                                name = groupName,
+                                position = { 
+                                    groupModel.PrimaryPart.Position.X, 
+                                    groupModel.PrimaryPart.Position.Y, 
+                                    groupModel.PrimaryPart.Position.Z 
+                                },
+                                orientation = { 
+                                    groupModel.PrimaryPart.Orientation.X, 
+                                    groupModel.PrimaryPart.Orientation.Y, 
+                                    groupModel.PrimaryPart.Orientation.Z 
+                                },
+                                size = { 
+                                    groupModel.PrimaryPart.Size.X, 
+                                    groupModel.PrimaryPart.Size.Y, 
+                                    groupModel.PrimaryPart.Size.Z 
+                                },
+                                attributes = {},
+                                scripts = {}
+                            }
+
+                            -- Store group attributes
+                            for attributeName, attributeValue in pairs(groupModel:GetAttributes()) do
+                                groupData.attributes[attributeName] = attributeValue
+                            end
+
+                            -- Store group scripts
+                            for _, script in ipairs(groupModel:GetChildren()) do
+                                if script:IsA("Script") or script:IsA("LocalScript") then
+                                    table.insert(groupData.scripts, {
+                                        name = script.Name,
+                                        source = script.Source
+                                    })
+                                end
+                            end
+                            table.insert(itemData.groups, groupData)
+                        end
+                    end
+
+                    table.insert(folderData, itemData)
+                end
+            end
+
+            -- Add folder data to the serialized object
+            serializedData[folder.Name] = folderData
+        end
+    end
+
+    return game:GetService("HttpService"):JSONEncode(serializedData)
+end
 
 function Obstacle_Course_Generator:check_collision_grid(newObstacle, grid_table)
     local newCheckpoint = newObstacle:GetAttribute("checkpoint_num")
@@ -121,7 +319,7 @@ function Obstacle_Course_Generator:generate_obstacle_course(seed, numberObstacle
     
     local assetsFolder = ReplicatedStorage:WaitForChild("assets")
     local objectFolder = assetsFolder:WaitForChild("obstacles")
-    local checkpointModel = assetsFolder:WaitForChild("Checkpoint")
+    local checkpointModel = objectFolder:WaitForChild("Checkpoint")
     
     local numObstacles = math.random(
         self.stage_config.number_of_obstacles[1], 
@@ -409,7 +607,8 @@ function Obstacle_Course_Generator:apply_permutations_to_groups(ObstacleModel)
                 local zSize = (group_data.size.z[1] == group_data.size.z[2]) and 1 or math.random(group_data.size.z[1], group_data.size.z[2])
                 scaleFactor = Vector3.new(xSize, ySize, zSize)
             end
-
+            
+            --[[
             -- Apply the permutations to each part
             for _, part in pairs(group_model:GetDescendants()) do
                 if part:IsA("BasePart") then
@@ -421,6 +620,10 @@ function Obstacle_Course_Generator:apply_permutations_to_groups(ObstacleModel)
 
                 end
             end
+            --]]
+            group_model.PrimaryPart.Size = group_model.PrimaryPart.Size * scaleFactor
+
+            group_model:SetPrimaryPartCFrame(group_model.PrimaryPart.CFrame * CFrame.new(positionOffset) * rotationOffset)
         end
     end
 

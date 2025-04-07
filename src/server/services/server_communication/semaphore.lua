@@ -5,30 +5,62 @@ local LockService = {}
 LockService.__index = LockService
 
 function LockService.new(lockName, timeout, count)
+    assert(lockName, "Lock name must be provided")
     local self = setmetatable({}, LockService)
-    self.queue = MemoryStoreService:GetQueue(lockName, count or 1) -- Allow multiple items
+
+    local success, queue = pcall(function()
+        return MemoryStoreService:GetQueue(lockName, count or 1)
+    end)
+
+    if not success or not queue then
+        error("Failed to initialize MemoryStore queue for lock: " .. tostring(lockName))
+    end
+
+    print("MemoryStore queue initialized for lock:", lockName)
+    self.queue = queue
     self.timeout = timeout or 10 -- Default lock timeout in seconds
     self.lockName = lockName
     self.maxCount = count or 1 -- Max number of concurrent locks
+
     return self
 end
 
 -- Get current count of locks in use
 function LockService:GetCount()
+    --[[
     local success, items = pcall(function()
-        return self.queue:ReadAsync(self.maxCount, false) -- Read current queue size
+        return self.queue:ReadAsync(self.maxCount, false, 3) -- Read current queue size
     end)
-    return success and #items or 0
+    --]]
+    print("get count in q " .. tostring(self.queue))
+    return self.queue:ReadAsync(self.maxCount, false, 3) or 0
 end
 
--- Try to acquire a lock (Non-blocking)
 function LockService:TryLock()
-    if self:GetCount() < self.maxCount then
-        local success = pcall(function()
+    if not self.queue then
+        warn("Queue not initialized for lock:", self.lockName)
+        return false
+    end
+
+    print("Attempting to acquire lock:", self.lockName)
+    local currentCount = self:GetCount()
+    print("Current lock count:", currentCount, "Max allowed:", self.maxCount)
+
+    if currentCount < self.maxCount then
+        local success, err = pcall(function()
             self.queue:AddAsync("LOCKED", self.timeout)
         end)
-        return success
+
+        if success then
+            print("Lock acquired successfully:", self.lockName)
+            return true
+        else
+            warn("Failed to acquire lock due to error:", err)
+        end
+    else
+        print("Lock not acquired. Max count reached for lock:", self.lockName)
     end
+
     return false
 end
 

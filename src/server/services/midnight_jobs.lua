@@ -22,7 +22,17 @@ function midnightJobs.make_obstacle_courses()
         100
     )
 
-    print(ObstacleCourseModel:WaitForChild("Checkpoints").length)
+    local serialized = Obstacle_Course_Generator:serialize_obstacle_course(ObstacleCourseModel)
+    local unserialized = Obstacle_Course_Generator:deserialize_obstacle_course(serialized)
+
+    if ObstacleCourseModel.PrimaryPart then
+        ObstacleCourseModel:SetPrimaryPartCFrame(
+            ObstacleCourseModel.PrimaryPart.CFrame * CFrame.new(0, 30, 0)
+        )
+    end
+
+    ObstacleCourseModel.Parent = workspace
+    unserialized.Parent = workspace
 
 end
 
