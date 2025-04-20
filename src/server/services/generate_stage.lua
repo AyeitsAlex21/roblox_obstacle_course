@@ -86,7 +86,6 @@ function Obstacle_Course_Generator:deserialize_obstacle_course(serializedData)
                     local newSize = Vector3.new(unpack(groupData.size))
                     local origSize = groupModel.PrimaryPart.Size
                     local scaleFactor = newSize / origSize
-                    print(scaleFactor)
                     assetHelper.apply_scale_factor(groupModel, scaleFactor)
 
                     -- Calculate the group's world-space position relative to the parent

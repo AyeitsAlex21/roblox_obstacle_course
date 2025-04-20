@@ -27,13 +27,27 @@ end
 
 -- Get current count of locks in use
 function LockService:GetCount()
-    --[[
+    if not self.queue then
+        warn("Queue not initialized for lock:", self.lockName)
+        return 0
+    end
+
     local success, items = pcall(function()
-        return self.queue:ReadAsync(self.maxCount, false, 3) -- Read current queue size
+        return self.queue:ReadAsync(self.maxCount, false, 0) -- Visibility timeout of 0
     end)
-    --]]
-    print("get count in q " .. tostring(self.queue))
-    return self.queue:ReadAsync(self.maxCount, false, 3) or 0
+
+    if success then
+        if items and #items > 0 then
+            print("Queue read successfully. Items in queue:", #items)
+            return #items -- Return the number of items in the queue
+        else
+            print("Queue is empty for lock:", self.lockName)
+            return 0
+        end
+    else
+        warn("Failed to read queue for lock:", self.lockName)
+        return 0
+    end
 end
 
 function LockService:TryLock()
@@ -42,13 +56,11 @@ function LockService:TryLock()
         return false
     end
 
-    print("Attempting to acquire lock:", self.lockName)
     local currentCount = self:GetCount()
-    print("Current lock count:", currentCount, "Max allowed:", self.maxCount)
 
     if currentCount < self.maxCount then
         local success, err = pcall(function()
-            self.queue:AddAsync("LOCKED", self.timeout)
+            self.queue:AddAsync("LOCKED", self.timeout) -- Add item with timeout
         end)
 
         if success then
@@ -58,7 +70,7 @@ function LockService:TryLock()
             warn("Failed to acquire lock due to error:", err)
         end
     else
-        print("Lock not acquired. Max count reached for lock:", self.lockName)
+        print("Lock not available:", self.lockName)
     end
 
     return false
