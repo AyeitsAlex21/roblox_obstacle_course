@@ -48,7 +48,11 @@ function Obstacle_Course_Generator:deserialize_obstacle_course(serializedData)
 
             -- Set the PrimaryPart's position, rotation, and size
             if itemModel.PrimaryPart then
-                itemModel.PrimaryPart.Size = Vector3.new(unpack(itemData.size))
+                local newSize = Vector3.new(unpack(itemData.size))
+                local origSize = itemModel.PrimaryPart.Size
+                local scaleFactor = newSize / itemModel.PrimaryPart.Size
+                
+                assetHelper.apply_scale_factor(itemModel, scaleFactor)
 
                 local position = Vector3.new(unpack(itemData.position))
                 local rightVector = Vector3.new(itemData.rotation[1], itemData.rotation[4], itemData.rotation[7]).Unit
@@ -79,7 +83,11 @@ function Obstacle_Course_Generator:deserialize_obstacle_course(serializedData)
                 local groupModel = assetHelper.find_model(itemModel, groupData.name)
                 if groupModel and groupModel.PrimaryPart then
 
-                    groupModel.PrimaryPart.Size = Vector3.new(unpack(groupData.size))
+                    local newSize = Vector3.new(unpack(groupData.size))
+                    local origSize = groupModel.PrimaryPart.Size
+                    local scaleFactor = newSize / origSize
+                    print(scaleFactor)
+                    assetHelper.apply_scale_factor(groupModel, scaleFactor)
 
                     -- Calculate the group's world-space position relative to the parent
                     local groupWorldPosition = Vector3.new(unpack(groupData.position))
@@ -502,11 +510,7 @@ function Obstacle_Course_Generator:move_obstacle_to_last_location(lastObjectMode
 
 
     -- apply scaling to all parts in the obstacle
-    for _, part in pairs(newObstacle:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.Size = part.Size * permuationSizeVector
-        end
-    end
+    assetHelper.apply_scale_factor(newObstacle, permuationSizeVector)
 
 end
 
@@ -557,9 +561,14 @@ function Obstacle_Course_Generator:get_model_permuation_matrices(ObstacleModel)
 
     -- Size Calculation
     if obstacleConfig.size then
-        local xSize = (obstacleConfig.size.x[1] == obstacleConfig.size.x[2]) and 1 or math.random(obstacleConfig.size.x[1], obstacleConfig.size.x[2])
-        local ySize = (obstacleConfig.size.y[1] == obstacleConfig.size.y[2]) and 1 or math.random(obstacleConfig.size.y[1], obstacleConfig.size.y[2])
-        local zSize = (obstacleConfig.size.z[1] == obstacleConfig.size.z[2]) and 1 or math.random(obstacleConfig.size.z[1], obstacleConfig.size.z[2])
+        local xSize = (obstacleConfig.size.x[1] == obstacleConfig.size.x[2]) and obstacleConfig.size.x[1] or 
+              (math.random(obstacleConfig.size.x[1] * 100, obstacleConfig.size.x[2] * 100) / 100)
+
+        local ySize = (obstacleConfig.size.y[1] == obstacleConfig.size.y[2]) and obstacleConfig.size.y[1] or 
+                    (math.random(obstacleConfig.size.y[1] * 100, obstacleConfig.size.y[2] * 100) / 100)
+
+        local zSize = (obstacleConfig.size.z[1] == obstacleConfig.size.z[2]) and obstacleConfig.size.z[1] or 
+                    (math.random(obstacleConfig.size.z[1] * 100, obstacleConfig.size.z[2] * 100) / 100)
         sizeVector = Vector3.new(xSize, ySize, zSize)
     end
 
@@ -615,9 +624,15 @@ function Obstacle_Course_Generator:apply_permutations_to_groups(ObstacleModel)
             -- apply random scaling if specified in group_data
             local scaleFactor = Vector3.new(1, 1, 1)
             if group_data.size then
-                local xSize = (group_data.size.x[1] == group_data.size.x[2]) and 1 or math.random(group_data.size.x[1], group_data.size.x[2])
-                local ySize = (group_data.size.y[1] == group_data.size.y[2]) and 1 or math.random(group_data.size.y[1], group_data.size.y[2])
-                local zSize = (group_data.size.z[1] == group_data.size.z[2]) and 1 or math.random(group_data.size.z[1], group_data.size.z[2])
+                local xSize = (group_data.size and group_data.size.x and group_data.size.x[1] == group_data.size.x[2]) and group_data.size.x[1] or 
+                            (group_data.size and group_data.size.x and math.random(group_data.size.x[1] * 100, group_data.size.x[2] * 100) / 100 or 1)
+
+                local ySize = (group_data.size and group_data.size.y and group_data.size.y[1] == group_data.size.y[2]) and group_data.size.y[1] or 
+                            (group_data.size and group_data.size.y and math.random(group_data.size.y[1] * 100, group_data.size.y[2] * 100) / 100 or 1)
+
+                local zSize = (group_data.size and group_data.size.z and group_data.size.z[1] == group_data.size.z[2]) and group_data.size.z[1] or 
+                            (group_data.size and group_data.size.z and math.random(group_data.size.z[1] * 100, group_data.size.z[2] * 100) / 100 or 1)
+
                 scaleFactor = Vector3.new(xSize, ySize, zSize)
             end
             
@@ -634,7 +649,7 @@ function Obstacle_Course_Generator:apply_permutations_to_groups(ObstacleModel)
                 end
             end
             --]]
-            group_model.PrimaryPart.Size = group_model.PrimaryPart.Size * scaleFactor
+            assetHelper.apply_scale_factor(group_model, scaleFactor)
 
             group_model:SetPrimaryPartCFrame(group_model.PrimaryPart.CFrame * CFrame.new(positionOffset) * rotationOffset)
         end
