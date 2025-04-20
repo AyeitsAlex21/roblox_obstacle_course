@@ -25,6 +25,29 @@ function assetHelper.find_part(model, name)
 
 end
 
+function assetHelper.apply_scale_factor(model, scale_factor)
+    if typeof(model) ~= "Instance" or not model:IsA("Model") then
+        error("Expected 'model' to be a Model instance, got " .. typeof(model))
+    end
+
+    if not model.PrimaryPart then
+        error("Model does not have a PrimaryPart set!")
+    end
+
+    -- Get the current position of the PrimaryPart
+    local primaryPart = model.PrimaryPart
+    local primaryPosition = primaryPart.Position
+
+    -- Scale each part in the model
+    for _, part in ipairs(model:GetDescendants()) do
+        if part:IsA("BasePart") then
+            -- Scale the size of the part
+            part.Size = part.Size * scale_factor
+
+        end
+    end
+end
+
 function assetHelper.apply_touched_event_to_part_name(model, eventFunction, partName)
     if typeof(model) ~= "Instance" or not model:IsA("Model") then
         error("Expected 'model' to be a Model instance, got " .. typeof(model))
@@ -36,8 +59,7 @@ function assetHelper.apply_touched_event_to_part_name(model, eventFunction, part
 
                 eventFunction(model, hit)
             end)
-
-            print("APPLIED")
+            
             return true -- Successfully connected event
         end
     end

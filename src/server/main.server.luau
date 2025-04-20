@@ -10,14 +10,14 @@ local function createTerrain()
 
     local ObGenObj = Obstacle_Generator.new()
     local stageModel = ObGenObj:generate_obstacle_course(3, 100)
-    stageModel.Parent = workspace
+    --stageModel.Parent = workspace
 
 end
 
 local RunService = game:GetService("RunService")
 local frameCount = 0
 local elapsedTime = 0
-
+--[[
 RunService.Heartbeat:Connect(function(deltaTime)
     frameCount = frameCount + 1
     elapsedTime = elapsedTime + deltaTime
@@ -28,6 +28,5 @@ RunService.Heartbeat:Connect(function(deltaTime)
         elapsedTime = 0
     end
 end)
-
-
+--]]
 createTerrain()  -- Call the function to generate the environment
