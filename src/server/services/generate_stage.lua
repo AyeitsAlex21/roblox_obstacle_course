@@ -40,21 +40,25 @@ function Obstacle_Course_Generator:deserialize_obstacle_course(serializedData)
 
         -- Loop through each item in the folder
         for _, itemData in ipairs(folderData) do
+
             -- Clone the model from ReplicatedStorage
             local itemModel = ReplicatedStorage:WaitForChild("assets"):WaitForChild("obstacles"):WaitForChild(itemData.name):Clone()
             assetHelper.set_part_attribute_in_model(itemModel, "Anchored", false)
             itemModel.Name = itemData.name
 
-            -- Set the PrimaryPart's position, orientation, and size
+            -- Set the PrimaryPart's position, rotation, and size
             if itemModel.PrimaryPart then
                 itemModel.PrimaryPart.Size = Vector3.new(unpack(itemData.size))
-                itemModel:SetPrimaryPartCFrame(
-                    CFrame.new(unpack(itemData.position)) * CFrame.Angles(
-                        math.rad(itemData.orientation[1]),
-                        math.rad(itemData.orientation[2]),
-                        math.rad(itemData.orientation[3])
-                    )
-                )
+
+                local position = Vector3.new(unpack(itemData.position))
+                local rightVector = Vector3.new(itemData.rotation[1], itemData.rotation[4], itemData.rotation[7]).Unit
+                local upVector = Vector3.new(itemData.rotation[2], itemData.rotation[5], itemData.rotation[8]).Unit
+                local lookVector = Vector3.new(itemData.rotation[3], itemData.rotation[6], itemData.rotation[9]).Unit
+
+                -- Reconstruct CFrame
+                local rotationMatrix = CFrame.fromMatrix(position, rightVector, upVector, lookVector)
+                itemModel:SetPrimaryPartCFrame(rotationMatrix)
+
             end
 
             -- Apply attributes
@@ -70,25 +74,31 @@ function Obstacle_Course_Generator:deserialize_obstacle_course(serializedData)
                 script.Parent = itemModel
             end
 
-            -- Process groups
+            -- Process groups (if applicable)
             for _, groupData in ipairs(itemData.groups) do
                 local groupModel = assetHelper.find_model(itemModel, groupData.name)
                 if groupModel and groupModel.PrimaryPart then
-                    -- Set the group's PrimaryPart's position, orientation, and size
+
                     groupModel.PrimaryPart.Size = Vector3.new(unpack(groupData.size))
 
-                    --[[
-                    TODO you are saving the rotation of the object in its entierity
-                    also saving the groups rotation. so you are applying the rotation twice
-                    instead of doing the objects rotation then the sub groups rotation
-                    --]]
-                    groupModel:SetPrimaryPartCFrame(
-                        CFrame.new(unpack(groupData.position)) * CFrame.Angles(
-                            math.rad(groupData.orientation[1]),
-                            math.rad(groupData.orientation[2]),
-                            math.rad(groupData.orientation[3])
-                        )
+                    -- Calculate the group's world-space position relative to the parent
+                    local groupWorldPosition = Vector3.new(unpack(groupData.position))
+
+                    -- Extract and normalize the rotation vectors
+                    local groupRightVector = Vector3.new(groupData.rotation[1], groupData.rotation[4], groupData.rotation[7]).Unit
+                    local groupUpVector = Vector3.new(groupData.rotation[2], groupData.rotation[5], groupData.rotation[8]).Unit
+                    local groupLookVector = Vector3.new(groupData.rotation[3], groupData.rotation[6], groupData.rotation[9]).Unit
+
+                    -- Reconstruct the group's world-space CFrame
+                    local groupRotationMatrix = CFrame.fromMatrix(
+                        groupWorldPosition, 
+                        groupRightVector, 
+                        groupUpVector, 
+                        groupLookVector
                     )
+
+                    -- Apply the CFrame to the group's PrimaryPart
+                    groupModel:SetPrimaryPartCFrame(groupRotationMatrix)
 
                     -- Apply group attributes
                     for attributeName, attributeValue in pairs(groupData.attributes) do
@@ -124,18 +134,23 @@ function Obstacle_Course_Generator:serialize_obstacle_course(obstacleCourseModel
 
             -- Loop through each item in the folder
             for _, item in ipairs(folder:GetChildren()) do
+                
+
                 if item:IsA("Model") and item.PrimaryPart then
+                    local primaryCFrame = item.PrimaryPart.CFrame
+                    local cFrameComps = {primaryCFrame:GetComponents()}
+
                     local itemData = {
                         name = item.Name,
                         position = { 
-                            item.PrimaryPart.Position.X, 
-                            item.PrimaryPart.Position.Y, 
-                            item.PrimaryPart.Position.Z 
+                            cFrameComps[1], 
+                            cFrameComps[2], 
+                            cFrameComps[3] 
                         },
-                        orientation = { 
-                            item.PrimaryPart.Orientation.X, 
-                            item.PrimaryPart.Orientation.Y, 
-                            item.PrimaryPart.Orientation.Z 
+                        rotation = { -- Save the full rotation matrix
+                            cFrameComps[4], cFrameComps[5], cFrameComps[6],
+                            cFrameComps[7], cFrameComps[8], cFrameComps[9],
+                            cFrameComps[10], cFrameComps[11], cFrameComps[12]
                         },
                         size = { 
                             item.PrimaryPart.Size.X, 
@@ -162,53 +177,51 @@ function Obstacle_Course_Generator:serialize_obstacle_course(obstacleCourseModel
                         end
                     end
 
-                    -- store group info
+                    -- Store group info (if applicable)
                     local obstacleConfig = self.obstacle_config[item.Name]
                     if obstacleConfig and obstacleConfig.groups then
                         for groupName, _ in pairs(obstacleConfig.groups) do
-
                             local groupModel = assetHelper.find_model(item, groupName)
+                            if groupModel and groupModel.PrimaryPart then
+                                local groupCFrameComps = {groupModel.PrimaryPart.CFrame:GetComponents()}
 
-                            if not groupModel then
-                                continue
-                            end
+                                local groupData = {
+                                    name = groupName,
+                                    position = { 
+                                        groupCFrameComps[1], 
+                                        groupCFrameComps[2], 
+                                        groupCFrameComps[3] 
+                                    },
+                                    rotation = { -- Save the full rotation matrix for groups
+                                        groupCFrameComps[4], groupCFrameComps[5], groupCFrameComps[6],
+                                        groupCFrameComps[7], groupCFrameComps[8], groupCFrameComps[9],
+                                        groupCFrameComps[10], groupCFrameComps[11], groupCFrameComps[12]
+                                    },
+                                    size = { 
+                                        groupModel.PrimaryPart.Size.X, 
+                                        groupModel.PrimaryPart.Size.Y, 
+                                        groupModel.PrimaryPart.Size.Z 
+                                    },
+                                    attributes = {},
+                                    scripts = {}
+                                }
 
-                            local groupData = {
-                                name = groupName,
-                                position = { 
-                                    groupModel.PrimaryPart.Position.X, 
-                                    groupModel.PrimaryPart.Position.Y, 
-                                    groupModel.PrimaryPart.Position.Z 
-                                },
-                                orientation = { 
-                                    groupModel.PrimaryPart.Orientation.X, 
-                                    groupModel.PrimaryPart.Orientation.Y, 
-                                    groupModel.PrimaryPart.Orientation.Z 
-                                },
-                                size = { 
-                                    groupModel.PrimaryPart.Size.X, 
-                                    groupModel.PrimaryPart.Size.Y, 
-                                    groupModel.PrimaryPart.Size.Z 
-                                },
-                                attributes = {},
-                                scripts = {}
-                            }
-
-                            -- Store group attributes
-                            for attributeName, attributeValue in pairs(groupModel:GetAttributes()) do
-                                groupData.attributes[attributeName] = attributeValue
-                            end
-
-                            -- Store group scripts
-                            for _, script in ipairs(groupModel:GetChildren()) do
-                                if script:IsA("Script") or script:IsA("LocalScript") then
-                                    table.insert(groupData.scripts, {
-                                        name = script.Name,
-                                        source = script.Source
-                                    })
+                                -- Store group attributes
+                                for attributeName, attributeValue in pairs(groupModel:GetAttributes()) do
+                                    groupData.attributes[attributeName] = attributeValue
                                 end
+
+                                -- Store group scripts
+                                for _, script in ipairs(groupModel:GetChildren()) do
+                                    if script:IsA("Script") or script:IsA("LocalScript") then
+                                        table.insert(groupData.scripts, {
+                                            name = script.Name,
+                                            source = script.Source
+                                        })
+                                    end
+                                end
+                                table.insert(itemData.groups, groupData)
                             end
-                            table.insert(itemData.groups, groupData)
                         end
                     end
 

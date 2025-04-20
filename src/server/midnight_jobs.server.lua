@@ -33,7 +33,7 @@ local function attemptToBeJobServer()
     end
 
     task.delay(
-        5,--timeHelper.getTimeUntilMidnightPST(), 
+        100,--timeHelper.getTimeUntilMidnightPST(), 
         attemptToBeJobServer
     )
 end

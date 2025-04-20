@@ -19,7 +19,7 @@ function midnightJobs.make_obstacle_courses()
    
     local ObstacleCourseModel = Obstacle_Course_Generator:generate_obstacle_course(
         todaysDateSeed,
-        100
+        numObstalces
     )
 
     local serialized = Obstacle_Course_Generator:serialize_obstacle_course(ObstacleCourseModel)
