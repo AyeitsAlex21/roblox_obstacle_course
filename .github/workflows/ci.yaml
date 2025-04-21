@@ -28,13 +28,9 @@ jobs:
         run: |
           foreman list
 
-      - name: Install Wally
-        run: |
-          foreman run -- wally --version
-
       - name: Install Wally packages
         run: |
-          foreman run -- wally install
+          wally install [--locked]
 
       - name: Verify Rojo installation
         run: |
