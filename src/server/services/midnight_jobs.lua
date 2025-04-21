@@ -24,6 +24,8 @@ function midnightJobs.make_obstacle_courses()
         numObstalces
     )
 
+    ObstacleCourseModel.Parent = workspace
+
     -- Serialize the obstacle course to JSON
     local serialized = Obstacle_Course_Generator:serialize_obstacle_course(ObstacleCourseModel)
 
