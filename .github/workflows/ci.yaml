@@ -30,7 +30,7 @@ jobs:
 
       - name: Install Wally packages
         run: |
-          wally install --locked
+          wally install
 
       - name: Verify Rojo installation
         run: |
