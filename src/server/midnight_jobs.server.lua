@@ -12,6 +12,8 @@ local function triggerMidnightEvent()
     print("Midnight event triggered! Firing RemoteEvent...")
     
     local ObstacleCourseModel = midnightJobs.make_obstacle_courses()
+
+    ObstacleCourseModel.Parent = workspace
 end
 
 
