@@ -33,22 +33,6 @@ Foreman: Manages CLI tools and environments.
 2. (Download Perl https://strawberryperl.com/) 
 3. cargo install foreman
 
-### Wally (needed for Document Store)
-
-#### Install Wally
-
-1. aftman add --global UpliftGames/wally
-2. aftman install
-
-or
-
-1. cargo install --locked --path . (install wally)
-
-#### Use Wally
-
-1. wally init (Creates empty wally package)
-2. wally install [--locked] (Install all packages from wally.toml)
-
 ### Document Store
 
 #### Gaurd
@@ -71,9 +55,15 @@ https://util.redblox.dev/guard.html
 ci/cd and foreman setup: https://www.youtube.com/watch?v=sEnNjNakXT8&ab_channel=sleitnick
 rojo setup based on: https://www.youtube.com/watch?v=18-cGOjfrKw&ab_channel=MonzterDEV
 
-1. in vscode go to view -> command pallet -> rojo -> default.project-json to start dev server
-2. Open roblox studio go to plugins
-3. click rojo and connect
+1. foreman install
+
+2. wally install
+
+3. in vscode go to view -> command pallet -> rojo -> default.project-json to start dev server
+
+4. Open roblox studio go to plugins
+
+5. click rojo and connect
 
 ### ROJO
 
