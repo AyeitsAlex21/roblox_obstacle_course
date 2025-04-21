@@ -4,24 +4,23 @@ local Guard = require(game:GetService("ReplicatedStorage").Packages.Guard)
 
 -- Define the Player data schema
 type PlayerDataSchema = {
-    perks: { [string]: {} },
+    perks: { [string]: boolean },
     stages: { [string]: { -- Dictionary keyed by stage ID
         checkpoint: number, -- The checkpoint the player is on
         completed: boolean, -- Whether the stage is completed
     } },
-    vips: { [string]: {} },
-    login_dates: { [string]: {} },
+    vips: { [string]: boolean },
+    login_dates: { [string]: boolean },
 }
+
+-- Custom validation for stages
 
 -- Define the data interface for validation using Guard
 local DataInterface = {
-    perks = Guard.Dictionary(Guard.Boolean), -- Validates a dictionary of booleans
-    stages = Guard.Dictionary(Guard.Struct({
-        checkpoint = Guard.Integer, -- Validates the checkpoint as an integer
-        completed = Guard.Boolean, -- Validates completion as a boolean
-    })),
-    vips = Guard.Dictionary(Guard.Boolean), -- Validates a dictionary of booleans
-    login_dates = Guard.Dictionary(Guard.Boolean), -- Validates a dictionary of booleans
+    perks = Guard.Map(Guard.String, Guard.Boolean), -- Validates a dictionary with string keys and boolean values
+    stages = Guard.Map(Guard.String, Guard.Map(Guard.Any, Guard.Any)), -- Validates a dictionary with string keys and custom stage validation
+    vips = Guard.Map(Guard.String, Guard.Boolean), -- Validates a dictionary with string keys and boolean values
+    login_dates = Guard.Map(Guard.String, Guard.Boolean), -- Validates a dictionary with string keys and boolean values
 }
 
 -- Define the data check function
@@ -44,13 +43,10 @@ local PlayerStore = DocumentService.DocumentStore.new({
     -- dataStore = MockDataStore:GetDataStore("Mock"),
     check = Guard.Check(dataCheck), -- Use Guard.Check for validation
     default = {
-        perks = {},
-        stages = {
-            --checkpoint = 0,
-            --completed = false
-        },
-        vips = {},
-        login_dates = {},
+        perks = {}, -- Empty dictionary for perks
+        stages = {}, -- Empty dictionary for stages
+        vips = {}, -- Empty dictionary for VIP perks
+        login_dates = {}, -- Empty dictionary for login dates
     },
     migrations = {}, -- Add migrations here if needed
     lockSessions = true, -- Enable session locking for player data

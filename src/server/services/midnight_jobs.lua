@@ -2,6 +2,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local StageStore = require(ServerScriptService.Server.models.stage)
+local PlayerStore = require(ServerScriptService.Server.models.player)
 
 local timeHelper = require(ServerScriptService.Server.helpers.times)
 local Obstacle_Course_Generator = require(ServerScriptService.Server.services.generate_stage)
@@ -47,6 +48,10 @@ function midnightJobs.make_obstacle_courses()
     else
         warn("Failed to create stage:", result.reason)
     end
+
+    local player_doc = PlayerStore:GetDocument("TEST") -- default value
+    player_doc:Open()
+    player_doc:Close()
 
 end
 
