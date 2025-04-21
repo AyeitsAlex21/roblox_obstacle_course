@@ -12,6 +12,10 @@
         "Checkpoint": {
           "$className": "RemoteEvent"
         }
+      },
+
+      "Packages": {
+        "$path": "Packages"
       }
     },
 

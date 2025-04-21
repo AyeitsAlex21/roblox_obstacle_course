@@ -16,6 +16,38 @@ rojo serve
 
 For more help, check out [the Rojo documentation](https://rojo.space/docs).
 
+### Tool config files
+
+Aftman: Manages tools like Rojo and Wally.
+
+Wally: Manages Roblox dependencies.
+
+Selene: Configures linting rules for Lua.
+
+Foreman: Manages CLI tools and environments.
+
+### Foreman install
+
+1. (just install Rust Cargo comes with it)
+2. add "foreman" to your PATH variable (there should be .foreman folder under Users/your_name so put Users/your_name/.foreman/bin)
+2. (Download Perl https://strawberryperl.com/) 
+3. cargo install foreman
+
+### Wally (needed for Document Store)
+
+#### Install Wally
+1. cargo install --locked --path . (install wally)
+
+or
+
+1. aftman add --global UpliftGames/wally
+2. aftman install
+
+#### Use Wally
+
+1. wally init (Creates empty wally package)
+2. wally install [--locked] (Install all packages from wally.toml)
+
 ### RUN DEV
 ci/cd and foreman setup: https://www.youtube.com/watch?v=sEnNjNakXT8&ab_channel=sleitnick
 rojo setup based on: https://www.youtube.com/watch?v=18-cGOjfrKw&ab_channel=MonzterDEV

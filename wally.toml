@@ -1,0 +1,8 @@
+[package]
+name = "alexs/roblox-obstacle-course" # Replace underscores with hyphens
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+
+[dependencies]
+DocumentService = "anthony0br/documentservice@1.2.2"
