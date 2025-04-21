@@ -36,12 +36,13 @@ Foreman: Manages CLI tools and environments.
 ### Wally (needed for Document Store)
 
 #### Install Wally
-1. cargo install --locked --path . (install wally)
-
-or
 
 1. aftman add --global UpliftGames/wally
 2. aftman install
+
+or
+
+1. cargo install --locked --path . (install wally)
 
 #### Use Wally
 
