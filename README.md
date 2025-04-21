@@ -48,6 +48,24 @@ or
 1. wally init (Creates empty wally package)
 2. wally install [--locked] (Install all packages from wally.toml)
 
+### Document Store
+
+#### Gaurd
+
+https://util.redblox.dev/guard.html#guard-map
+
+#### Developer Cheat Sheet
+
+1. Close documents that are session locked after you are done with them. This is so we dont have servers waiting on documents locked by another.
+
+#### Documentation
+
+https://anthony0br.github.io/DocumentService/docs/intro
+
+#### Gaurd Documentation
+
+https://util.redblox.dev/guard.html
+
 ### RUN DEV
 ci/cd and foreman setup: https://www.youtube.com/watch?v=sEnNjNakXT8&ab_channel=sleitnick
 rojo setup based on: https://www.youtube.com/watch?v=18-cGOjfrKw&ab_channel=MonzterDEV

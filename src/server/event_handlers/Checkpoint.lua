@@ -2,15 +2,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local CheckpointEvent = ReplicatedStorage:WaitForChild("RemoteEvents"):WaitForChild("Checkpoint")
 
-local ORM = require(ServerScriptService.Server.models.ORM)
-local PlayerModel = require(ServerScriptService.Server.models.player)
-local PlayerMemStoreORM = ORM.new("memorystore", "Player", PlayerModel)
-
-local tableHelper = require(ServerScriptService.Server.helpers.tables)
-
 local TOLERABLE_CHECKPOINTS_TRAVELED = 2
 
 local function onCheckpointTouched(checkpointModel, hit)
+    return nil
+    --[[
     local player = game.Players:GetPlayerFromCharacter(hit.Parent)
 
     -- return if player DNE
@@ -41,6 +37,7 @@ local function onCheckpointTouched(checkpointModel, hit)
         -- send the model so client can animate it
         CheckpointEvent:FireClient(player, checkpointModel)
     end
+    --]]
 end
 
 return onCheckpointTouched

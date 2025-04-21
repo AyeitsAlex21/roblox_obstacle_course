@@ -5,9 +5,14 @@ registry = "test"
 [[package]]
 name = "alexs/roblox-obstacle-course"
 version = "0.1.0"
-dependencies = [["DocumentService", "anthony0br/documentservice@1.2.2"]]
+dependencies = [["DocumentService", "anthony0br/documentservice@1.2.2"], ["Guard", "red-blox/guard@1.0.1"]]
 
 [[package]]
 name = "anthony0br/documentservice"
 version = "1.2.2"
+dependencies = []
+
+[[package]]
+name = "red-blox/guard"
+version = "1.0.1"
 dependencies = []
