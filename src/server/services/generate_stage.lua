@@ -134,6 +134,10 @@ end
 function Obstacle_Course_Generator:serialize_obstacle_course(obstacleCourseModel)
     local serializedData = {}
 
+    local function roundTo3Decimals(value)
+        return math.floor(value * 10^3) / 10^3
+    end
+
     -- Loop through all folders in the obstacle course model
     for _, folder in ipairs(obstacleCourseModel:GetChildren()) do
         if folder:IsA("Folder") then
@@ -150,19 +154,19 @@ function Obstacle_Course_Generator:serialize_obstacle_course(obstacleCourseModel
                     local itemData = {
                         name = item.Name,
                         position = { 
-                            cFrameComps[1], 
-                            cFrameComps[2], 
-                            cFrameComps[3] 
+                            roundTo3Decimals(cFrameComps[1]), 
+                            roundTo3Decimals(cFrameComps[2]), 
+                            roundTo3Decimals(cFrameComps[3]) 
                         },
                         rotation = { -- Save the full rotation matrix
-                            cFrameComps[4], cFrameComps[5], cFrameComps[6],
-                            cFrameComps[7], cFrameComps[8], cFrameComps[9],
-                            cFrameComps[10], cFrameComps[11], cFrameComps[12]
+                            roundTo3Decimals(cFrameComps[4]), roundTo3Decimals(cFrameComps[5]), roundTo3Decimals(cFrameComps[6]),
+                            roundTo3Decimals(cFrameComps[7]), roundTo3Decimals(cFrameComps[8]), roundTo3Decimals(cFrameComps[9]),
+                            roundTo3Decimals(cFrameComps[10]), roundTo3Decimals(cFrameComps[11]), roundTo3Decimals(cFrameComps[12])
                         },
                         size = { 
-                            item.PrimaryPart.Size.X, 
-                            item.PrimaryPart.Size.Y, 
-                            item.PrimaryPart.Size.Z 
+                            roundTo3Decimals(item.PrimaryPart.Size.X), 
+                            roundTo3Decimals(item.PrimaryPart.Size.Y), 
+                            roundTo3Decimals(item.PrimaryPart.Size.Z) 
                         },
                         attributes = {},
                         scripts = {},
@@ -195,19 +199,19 @@ function Obstacle_Course_Generator:serialize_obstacle_course(obstacleCourseModel
                                 local groupData = {
                                     name = groupName,
                                     position = { 
-                                        groupCFrameComps[1], 
-                                        groupCFrameComps[2], 
-                                        groupCFrameComps[3] 
+                                        roundTo3Decimals(groupCFrameComps[1]), 
+                                        roundTo3Decimals(groupCFrameComps[2]), 
+                                        roundTo3Decimals(groupCFrameComps[3]) 
                                     },
                                     rotation = { -- Save the full rotation matrix for groups
-                                        groupCFrameComps[4], groupCFrameComps[5], groupCFrameComps[6],
-                                        groupCFrameComps[7], groupCFrameComps[8], groupCFrameComps[9],
-                                        groupCFrameComps[10], groupCFrameComps[11], groupCFrameComps[12]
+                                        roundTo3Decimals(groupCFrameComps[4]), roundTo3Decimals(groupCFrameComps[5]), roundTo3Decimals(groupCFrameComps[6]),
+                                        roundTo3Decimals(groupCFrameComps[7]), roundTo3Decimals(groupCFrameComps[8]), roundTo3Decimals(groupCFrameComps[9]),
+                                        roundTo3Decimals(groupCFrameComps[10]), roundTo3Decimals(groupCFrameComps[11]), roundTo3Decimals(groupCFrameComps[12])
                                     },
                                     size = { 
-                                        groupModel.PrimaryPart.Size.X, 
-                                        groupModel.PrimaryPart.Size.Y, 
-                                        groupModel.PrimaryPart.Size.Z 
+                                        roundTo3Decimals(groupModel.PrimaryPart.Size.X), 
+                                        roundTo3Decimals(groupModel.PrimaryPart.Size.Y), 
+                                        roundTo3Decimals(groupModel.PrimaryPart.Size.Z) 
                                     },
                                     attributes = {},
                                     scripts = {}
