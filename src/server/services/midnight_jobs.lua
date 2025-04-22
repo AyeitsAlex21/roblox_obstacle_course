@@ -15,18 +15,21 @@ local midnightJobs = {}
 function midnightJobs.pre_make_obstacle_courses()
     local daysAheadofCurrentDate = MIDNIGHT_JOBS_CONFIG.days_ahead
     local overwrite_existing = MIDNIGHT_JOBS_CONFIG.overwrite_existing
+    local startingDay = MIDNIGHT_JOBS_CONFIG.skip_today and 1 or 0
 
-    for i = 0, daysAheadofCurrentDate do
+    for i = startingDay, daysAheadofCurrentDate do
+
         -- Calculate the date for `i` days ahead
         local futureDate = os.date("%m/%d/%Y", os.time() + (i * 24 * 60 * 60)) -- Add `i` days in seconds
         local futureDateSeed = timeHelper.getDatesSeed(futureDate)
-        print(futureDate)
+        print("Creating stage for " .. futureDate)
 
         local document = StageStore:GetDocument(futureDate)
         local readResult = document:Read()
 
         -- if stage document exists then skip and we are not overwriting existing
         if readResult.success and not overwrite_existing then
+            print("Stage for " .. futureDate .. " already exists. Skipping...")
             continue -- Skip to the next iteration
         end
 
