@@ -279,7 +279,7 @@ function Obstacle_Course_Generator:check_collision_grid(newObstacle, grid_table)
     )
 
 
-    local expandedNewHalf = (newSize * 2)
+    local expandedNewHalf = (newSize * 1.5)
     local expandedNewMin = newCenter - expandedNewHalf
     local expandedNewMax = newCenter + expandedNewHalf
 
@@ -376,7 +376,7 @@ function Obstacle_Course_Generator:generate_obstacle_course(seed, numberObstacle
     local obstacleGridMaxZVal = self.stage_config.obstacle_grid_size["z"]
     
     local function try_place(index, lastObstacle)
-        --task.wait()
+        task.wait()
 
         -- if true done placing obstacles end recursion
         if index >= numObstacles then 
@@ -397,7 +397,7 @@ function Obstacle_Course_Generator:generate_obstacle_course(seed, numberObstacle
         end
     
         newObstacle:SetAttribute("checkpoint_num", index)
-        local MAX_ATTEMPTS = 5
+        local MAX_ATTEMPTS = 10
         -- For non-checkpoint obstacles, we increment index by one after placement.
         local newInd = (newObstacle.Name == "Checkpoint") and index or index + 1
         local origCframe = newObstacle.PrimaryPart.CFrame

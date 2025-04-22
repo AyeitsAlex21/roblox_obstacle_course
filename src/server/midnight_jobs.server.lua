@@ -11,9 +11,7 @@ local mutexLock = semaphoreService.new("stage_generation", 30, 1) -- 10 seconds 
 local function triggerMidnightEvent()
     print("Midnight event triggered! Firing RemoteEvent...")
     
-    local ObstacleCourseModel = midnightJobs.make_obstacle_courses()
-
-    ObstacleCourseModel.Parent = workspace
+    local ObstacleCourseModel = midnightJobs.pre_make_obstacle_courses()
 end
 
 

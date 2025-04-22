@@ -28,7 +28,12 @@ function timeHelper.getTimeUntilMidnightPST()
     return midnightPST - now
 end
 
-function timeHelper.getDatesSeed(dateStr: string) -- ex. m/d/Y
+function timeHelper.getDatesSeed(dateStr: string) -- ex. MM/DD/YYYY
+    -- Validate the input format (optional)
+    if not dateStr:match("^%d%d/%d%d/%d%d%d%d$") then
+        error("Invalid date format. Expected MM/DD/YYYY")
+    end
+
     -- Remove the slashes to create a clean number for the seed
     local dateStrNoSlashes = dateStr:gsub("/", "")
     -- Convert the cleaned date string into a number

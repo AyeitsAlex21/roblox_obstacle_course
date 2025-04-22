@@ -1,5 +1,5 @@
 local OBSTACLE_CONFIG = {
-    ["number_of_obstacles"] = {1500, 1501},
+    ["number_of_obstacles"] = {100, 300},
     ["grid_size"] = 100,
     ["obstacle_grid_size"] = {
         x = 1000,
