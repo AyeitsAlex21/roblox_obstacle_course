@@ -57,12 +57,6 @@ local OBSTACLE_CONFIG = {
             },
         }
     },
-    ["Hanged Platforms"] = {
-        orientation = {
-            y = {0, 30},
-            x = {-30,  0}
-        },
-    },
     ["Zig Zag Tight Rope1"] = {
         orientation = {
             y = {-30, 30},

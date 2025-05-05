@@ -1,17 +1,21 @@
+--[[
+This file kicks off a midnight job to create stages
+--]]
+
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local timeHelper = require(ServerScriptService.Server.helpers.times)
 local midnightJobs = require(ServerScriptService.Server.services.midnight_jobs)
 local semaphoreService = require(ServerScriptService.Server.services.server_communication.semaphore)
 
-local mutexLock = semaphoreService.new("stage_generation", 30, 1) -- 10 seconds then lock expires and only 1 server can have lock
+local mutexLock = semaphoreService.new("stage_generation", 60, 1) -- 10 seconds then lock expires and only 1 server can have lock
 
 
 
 local function triggerMidnightEvent()
     print("Midnight event triggered! Firing RemoteEvent...")
     
-    local ObstacleCourseModel = midnightJobs.pre_make_obstacle_courses()
+    midnightJobs.pre_make_obstacle_courses()
 end
 
 
@@ -32,7 +36,9 @@ local function attemptToBeJobServer()
     )
 end
 
+print("Will start try to do midnight job in " .. tostring(timeHelper.getTimeUntilMidnightPST()) .. " seconds")
+
 task.delay(
-    1,--timeHelper.getTimeUntilMidnightPST(), 
+    timeHelper.getTimeUntilMidnightPST(), 
     attemptToBeJobServer
 )

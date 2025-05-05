@@ -1,5 +1,6 @@
 local ServerScriptService = game:GetService("ServerScriptService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local AssetService = game:GetService("AssetService")
 
 local StageStore = require(ServerScriptService.Server.models.stage)
 
@@ -28,7 +29,7 @@ function midnightJobs.pre_make_obstacle_courses()
         local readResult = document:Read()
 
         -- if stage document exists then skip and we are not overwriting existing
-        if readResult.success and not overwrite_existing then
+        if readResult.success and (not overwrite_existing) then
             print("Stage for " .. futureDate .. " already exists. Skipping...")
             continue -- Skip to the next iteration
         end
@@ -51,6 +52,20 @@ function midnightJobs.pre_make_obstacle_courses()
         -- Serialize the obstacle course to JSON
         local serialized = Obstacle_Course_Generator:serialize_obstacle_course(ObstacleCourseModel)
 
+        local success, newPlaceId = pcall(function()
+            return AssetService:CreatePlaceAsync(
+                "Obby_" .. futureDate, -- Name of the new place
+                1234567890, -- Template place ID
+                "Daily generated obby" -- Description
+            )
+        end)
+        
+        if success then
+            print("Successfully created place with ID:", newPlaceId)
+        else
+            error("Failed to create place for date:", futureDate)
+        end
+
         -- Open and update the document with the stage data
         local result = document:OpenAndUpdate(function(data)
             return {
@@ -60,6 +75,7 @@ function midnightJobs.pre_make_obstacle_courses()
                 obstacle_course = serialized, -- Serialized obstacle course
                 created_on = os.date("%Y-%m-%d %H:%M:%S"), -- Timestamp for creation
                 last_updated = os.date("%Y-%m-%d %H:%M:%S"), -- Timestamp for last update
+                place_id = newPlaceId
             }
         end)
 

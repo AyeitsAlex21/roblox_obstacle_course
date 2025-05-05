@@ -69,3 +69,5 @@ rojo setup based on: https://www.youtube.com/watch?v=18-cGOjfrKw&ab_channel=Monz
 
 if you want to rojo to register your folder at the same level as client/server/shared need to
 do it like the others in default.project.json
+
+NETRAY
